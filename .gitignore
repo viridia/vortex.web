@@ -5,11 +5,18 @@
 /.pnp
 .pnp.js
 
+# config
+.env
+.env-secure
+
 # testing
 /coverage
+/data
+/uploads
 
 # production
 /build
+vortex-bundle.zip
 
 # misc
 .DS_Store

@@ -1,44 +1,87 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Vortex
+======
 
-## Available Scripts
+Vortex is a texture generator application. It's intent is to make it easy to create tileable textures
+for use in 3D models.
 
-In the project directory, you can run:
+The actual computation of the images is performed by the GPU using WebGL.
 
-### `npm start`
+## Screenshot
 
-Runs the app in the development mode.<br />
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+![screenshot](./doc/screenshot.png "Vortex UI")
 
-The page will reload if you make edits.<br />
-You will also see any lint errors in the console.
+## Running the application in the Cloud
 
-### `npm test`
+Go to https://vortex.run
 
-Launches the test runner in the interactive watch mode.<br />
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Using the application
 
-### `npm run build`
+* To create new nodes, drag from the operator table (on the left side panel) into the workspace area.
+* To get a detailed description of an operator, select that row in the operator table.
+* To delete a node, select a node and then hit the delete key.
+* Nodes can be connected via i/o terminals located on the left and right edges of the node.
+  * Input terminals are on the left, output terminals are on the right.
+  * Create connections by dragging between terminals.
+  * You cannot connect an output to an output or an input to an input. Inputs must be connected to outputs.
+  * Output nodes can have any number of connections, the signal is copied to all connected inputs.
+  * Input nodes can only have one connection. Attempting to add another connection will replace the previous connection.
+* When a node is selected, the node's property list will appear on the right panel.
+* Node properties are shown as 'combo sliders' which are a combination of slider and text input, very
+  similar to the controls in Blender. You can click the arrows, drag left and right, or double-click
+  to type in a numeric value directly.
+* Editing gradients: Double-click to add or remove a color stop.
+* Select the 'Shader' button on the left panel to view the text of the generated OpenGL shader.
+* Select the 'Export' button to see a high-res version of the generated image for the current selected node.
 
-Builds the app for production to the `build` folder.<br />
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Saving and loading documents
 
-The build is minified and the filenames include the hashes.<br />
-Your app is ready to be deployed!
+* The 'save' button only appears when the document has never been saved. Once you save the document
+  the first time, any additional changes are auto-saved and the save button disappears. (The idea is
+  that it doesn't create a database record if you are just playing around.)
+* The 'save' button will prompt you to log in if you are not already.
+* The 'fork' button creates a new copy of the document under a different name which you can then
+  modify.
+* The 'load' button displays a dialog of documents that you have created. It is only available
+  if you are logged  in.
+* Anyone can access your documents if they have the link, but they can't modify your document.
+  (They can however fork it.) This means you can share links to a document.
+* Click on the document name to rename it.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Running the application locally
 
-### `npm run eject`
+You'll need to create a .env file. See .env-sample. Basically you will need to tell it what kind
+of data storage you want to use for documents and images. Currently the only supported image store
+is Amazon S3, however it should be easy to create one that uses a local database. For documents
+(a.k.a. graphs), you can either use RethinkDB (my favorite database hands down) or AWS DynamoDB. For
+the latter (and S3) you'll need an AWS developer account.
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+One you have a .env file, you can run:
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+    npm install
+    npm run server
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+Then navigate to http://localhost:9001
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+## Articles
 
-## Learn More
+  * [The technology behind Vortex](https://medium.com/machine-words/the-technology-behind-vortex-a-real-time-browser-based-seamless-texture-generator-b18807fd8865)
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## Credits
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+Vortex was written by Talin.
+
+Vortex is heavily inspired by Holger Dammertz's NeoTextureEdit application. There are a number of
+significant differences between the two programs, the biggest of which is the fact that Vortex has
+been entirely rewritten in JavaScript and runs entirely in the browser.
+
+## Looking for Contributions
+
+I would be very interested in contributions for additional operator types. Note, however, that
+it is strongly preferred that operators be seamlessly tileable, which can be a challenge
+with certain algorithms.
+
+Feel free to create a GitHub issue if you have an idea you'd like to see implemented.
+
+### If you like Vortex, check out some of my other projects:
+
+  * https://github.com/viridia/klendathu
