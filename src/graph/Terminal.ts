@@ -16,4 +16,7 @@ export interface Terminal {
 
   // Whether this is an input or output terminal
   readonly output: boolean;
+
+  // True when dragging a connection to this terminal and it can connect.
+  hover: boolean;
 }

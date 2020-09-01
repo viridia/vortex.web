@@ -25,6 +25,8 @@ export class OutputTerminal extends AbstractTerminal {
   }
 }
 
-export function isOutputTerminal(terminal: Terminal): terminal is OutputTerminal {
-  return terminal.output;
+export function isOutputTerminal(
+  terminal: Terminal | null | undefined
+): terminal is OutputTerminal {
+  return terminal instanceof AbstractTerminal && terminal.output;
 }

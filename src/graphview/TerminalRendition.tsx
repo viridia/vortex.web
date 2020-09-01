@@ -1,11 +1,9 @@
-import React, { FC, useContext, useMemo, useState } from 'react';
+import React, { FC } from 'react';
 import classNames from 'classnames';
 import styled from '@emotion/styled';
-import { DragContext } from './GraphView';
-import { DragType } from './DragType';
 import { Graph, GraphNode } from '../graph';
-import { InputTerminal, isInputTerminal } from '../graph/InputTerminal';
-import { OutputTerminal, isOutputTerminal } from '../graph/OutputTerminal';
+import { InputTerminal } from '../graph/InputTerminal';
+import { OutputTerminal } from '../graph/OutputTerminal';
 import { colors } from '../styles';
 import { observer } from 'mobx-react';
 
@@ -13,7 +11,7 @@ const TerminalElt = styled.div`
   position: absolute;
   display: flex;
   align-items: center;
-  width: 20px;
+  width: 15px;
   height: 30px;
   cursor: cell;
   z-index: 12;
@@ -67,82 +65,16 @@ interface Props {
   terminal: InputTerminal | OutputTerminal;
 }
 
-
 /** A visual representation of an input or output terminal in the graph. */
-export const TerminalRendition: FC<Props> = observer(({ graph, node, terminal }) => {
-  const [active, setActive] = useState(false);
-  const dragContext = useContext(DragContext);
-
-  const methods = useMemo(() => {
-    return {
-      onDragStart(e: React.DragEvent) {
-        dragContext.setDragOrigin(terminal);
-        e.dataTransfer.dropEffect = 'none';
-        e.dataTransfer.setDragImage(new Image(), 0, 0);
-        e.dataTransfer.setData(terminal.output ? DragType.OUTPUT : DragType.INPUT, JSON.stringify({
-          node: node.id,
-          terminal: terminal.id,
-        }));
-      },
-
-      onDragEnter(e: React.DragEvent) {
-        const origin = dragContext.getDragOrigin();
-        if (origin && origin.node !== node) {
-          if (e.dataTransfer.types.indexOf(terminal.output ? DragType.INPUT : DragType.OUTPUT) >= 0) {
-            if (graph.detectCycle(origin, terminal)) {
-              return;
-            }
-            setActive(true);
-            dragContext.setDragTarget(terminal);
-            e.preventDefault();
-          }
-        }
-      },
-
-      onDragLeave() {
-        if (dragContext.getDragTarget() === terminal) {
-          dragContext.setDragTarget(null);
-        }
-        setActive(false);
-      },
-
-      onDragEnd() {
-        if (dragContext.getDragOrigin() === terminal) {
-          dragContext.setDragOrigin(null);
-        }
-      },
-
-      onDrop() {
-        const origin = dragContext.getDragOrigin();
-        const target = dragContext.getDragTarget();
-        if (target && origin && origin.node !== node) {
-          if (isOutputTerminal(origin) && isInputTerminal(target)) {
-            dragContext.graph.connectTerminals(origin, target);
-          } else if (isOutputTerminal(target) && isInputTerminal(origin)) {
-            dragContext.graph.connectTerminals(target, origin);
-          }
-        }
-        setActive(false);
-        dragContext.setDragOrigin(null);
-        dragContext.setDragTarget(null);
-      },
-    }
-  }, [dragContext, graph, node, terminal]);
-
+export const TerminalRendition: FC<Props> = observer(({ node, terminal }) => {
   const output = terminal.output;
   return (
     <TerminalElt
-        className={classNames('terminal', { in: !output, out: output, active })}
+        className={classNames('terminal', { in: !output, out: output, active: terminal.hover })}
         data-id={terminal.id}
         data-node={node.id}
+        data-terminal={terminal.id}
         style={{ left: `${terminal.x}px`, top: `${terminal.y}px` }}
-        draggable={true}
-        onDragStart={methods.onDragStart}
-        onDragEnter={methods.onDragEnter}
-        onDragOver={methods.onDragEnter}
-        onDragLeave={methods.onDragLeave}
-        onDragEnd={methods.onDragEnd}
-        onDrop={methods.onDrop}
     >
       <TerminalCaption className="caption">{terminal.name}</TerminalCaption>
       <TerminalDisc className="disc" />

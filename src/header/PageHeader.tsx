@@ -101,6 +101,7 @@ export class PageHeader extends Component<Props, State> {
   @bind
   private onSave() {
     if (localStorage.getItem('session')) {
+      // TODO
       // this.props.onSave();
     } else {
       this.setState({ showLogin: true, postLoginAction: 'save' });

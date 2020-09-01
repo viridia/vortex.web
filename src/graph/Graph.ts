@@ -27,6 +27,7 @@ export class Graph {
   }
 
   /** Add a node to the list. */
+  @action
   public add(node: GraphNode) {
     this.nodeCount = Math.max(this.nodeCount, node.id + 1);
     this.nodes.push(node);
@@ -40,14 +41,28 @@ export class Graph {
   }
 
   /** Locate a node by id. */
-  public findNode(id: number): GraphNode | undefined {
-    return this.nodes.find(n => n.id === id);
+  public findNode(id: number | string): GraphNode | undefined {
+    const nid = Number(id);
+    return this.nodes.find(n => n.id === nid);
   }
 
   /** Locate a terminal by id. */
-  public findTerminal(nodeId: number, terminalId: string): Terminal | undefined {
+  public findTerminal(nodeId: number | string, terminalId: string): Terminal | undefined {
     const node = this.findNode(nodeId);
     return node && node.findTerminal(terminalId);
+  }
+
+  public findInputTerminal(nodeId: number | string, terminalId: string): InputTerminal | undefined {
+    const node = this.findNode(nodeId);
+    return node && node.findInputTerminal(terminalId);
+  }
+
+  public findOutputTerminal(
+    nodeId: number | string,
+    terminalId: string
+  ): OutputTerminal | undefined {
+    const node = this.findNode(nodeId);
+    return node && node.findOutputTerminal(terminalId);
   }
 
   public connect(
@@ -106,6 +121,7 @@ export class Graph {
   }
 
   /** Clear the current selection. */
+  @action
   public clearSelection() {
     this.nodes.forEach(n => {
       n.selected = false;
@@ -211,6 +227,7 @@ export class Graph {
     };
   }
 
+  @action
   public fromJs(json: any, registry: Registry) {
     if (typeof json.name === 'string') {
       this.name = json.name;

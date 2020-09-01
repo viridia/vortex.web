@@ -107,7 +107,6 @@ export const usePointerDrag = <T extends HTMLElement = HTMLElement>(
       };
 
       const onPointerMove = (e: PointerEvent) => {
-        console.log(e.target, e.relatedTarget);
         if (e.pointerId === pointerId.current) {
           updateDragPosition(e);
           cbs.current.onDragMove && cbs.current.onDragMove(dragState, e);
@@ -115,6 +114,7 @@ export const usePointerDrag = <T extends HTMLElement = HTMLElement>(
       };
 
       const onPointerDown = (e: PointerEvent) => {
+        e.stopPropagation();
         dragState.target = e.target as T;
         dragState.inBounds = true;
         updateDragPosition(e);

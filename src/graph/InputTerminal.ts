@@ -8,6 +8,6 @@ export class InputTerminal extends AbstractTerminal {
   @observable public connection: Connection | null = null;
 }
 
-export function isInputTerminal(terminal: Terminal): terminal is InputTerminal {
-  return !terminal.output;
+export function isInputTerminal(terminal: Terminal | null | undefined): terminal is InputTerminal {
+  return terminal instanceof AbstractTerminal && !terminal.output;
 }

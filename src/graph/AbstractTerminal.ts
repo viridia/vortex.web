@@ -1,5 +1,6 @@
 import { GraphNode } from './GraphNode';
 import { Terminal } from './Terminal';
+import { observable } from 'mobx';
 
 export class AbstractTerminal implements Terminal {
   public readonly node: GraphNode;
@@ -8,6 +9,7 @@ export class AbstractTerminal implements Terminal {
   public readonly y: number;
   public readonly name: string;
   public readonly output: boolean;
+  @observable hover: boolean = false;
 
   constructor(node: GraphNode, name: string, id: string, x: number, y: number, output = false) {
     this.node = node;

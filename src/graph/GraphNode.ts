@@ -53,7 +53,7 @@ export class GraphNode {
       const spacing = Math.min(36, 120 / operator.inputs.length);
       let y = Math.floor((120 - operator.inputs.length * spacing) / 2);
       operator.inputs.forEach(input => {
-        this.inputs.push(new InputTerminal(this, input.name, input.id, -19, y));
+        this.inputs.push(new InputTerminal(this, input.name, input.id, -14, y));
         y += spacing;
       });
     }

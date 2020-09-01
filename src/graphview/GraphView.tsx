@@ -1,21 +1,29 @@
-import React, { createContext, createRef } from 'react';
-import bind from 'bind-decorator';
+import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from '@emotion/styled';
+import { AbstractTerminal } from '../graph/AbstractTerminal';
 import { CompassRose } from '../controls/CompassRose';
-import { Component } from 'react';
-import { Connection, Graph, GraphNode, OutputTerminal, Terminal, quantize } from '../graph';
+import {
+  Connection,
+  Graph,
+  GraphNode,
+  InputTerminal,
+  OutputTerminal,
+  Terminal,
+  quantize,
+} from '../graph';
 import { ConnectionRendition } from './ConnectionRendition';
-import { InputTerminal } from '../graph/InputTerminal';
 import { NodeRendition } from './NodeRendition';
-import { action } from 'mobx';
+import { action, runInAction } from 'mobx';
 import { colors } from '../styles';
 import { darken } from 'polished';
+import { isInputTerminal } from '../graph/InputTerminal';
+import { isOutputTerminal } from '../graph/OutputTerminal';
 import { observer } from 'mobx-react';
 import { registry } from '../operators/Registry';
 
 const graphDkBg = darken(0.02, colors.graphBg);
 
-type DragType = 'input' | 'output' | 'node';
+type DragType = 'input' | 'output' | 'node' | null;
 
 const GraphElt = styled.section`
   position: relative;
@@ -59,326 +67,461 @@ const GVBackdrop = styled.section`
   right: 0;
 `;
 
-export interface DragContextType {
-  graph: Graph;
-  getDragOrigin(): Terminal | null;
-  getDragTarget(): Terminal | null;
-  setDragOrigin(terminal: Terminal | null): void;
-  setDragTarget(terminal: Terminal | null): void;
-}
-
-export const DragContext = createContext<DragContextType>((null as unknown) as DragContextType);
-
 interface Props {
   graph: Graph;
 }
 
+const useNodeDropTarget = (graph: Graph, xScroll: number, yScroll: number) => {
+  const [dropValid, setDropValid] = useState(false);
+
+  // For dropping catalog items onto the canvas using drag/drop protocol.
+  return useMemo(() => {
+    return {
+      onDragEnter(e: React.DragEvent<HTMLDivElement>) {
+        if (e.dataTransfer.types.indexOf('application/x-vortex-operator') >= 0) {
+          e.preventDefault();
+        }
+        setDropValid(true);
+      },
+
+      onDragOver(e: React.DragEvent<HTMLDivElement>) {
+        if (e.dataTransfer.types.indexOf('application/x-vortex-operator') >= 0) {
+          e.preventDefault();
+        }
+        setDropValid(true);
+      },
+
+      onDragLeave(e: React.DragEvent<HTMLDivElement>) {
+        setDropValid(false);
+      },
+
+      onDrop(e: React.DragEvent<HTMLDivElement>) {
+        const data = e.dataTransfer.getData('application/x-vortex-operator');
+        if (dropValid && data) {
+          const base = e.currentTarget;
+          graph.clearSelection();
+          const op = registry.get(data);
+          const node = new GraphNode(op, graph.nextId());
+          node.x = quantize(e.clientX - base.offsetLeft - xScroll - 45);
+          node.y = quantize(e.clientY - base.offsetTop - yScroll - 60);
+          node.selected = true;
+          graph.add(node);
+        }
+      },
+    };
+  }, [graph, xScroll, yScroll, dropValid]);
+};
+
 interface State {
-  xScroll: number;
-  yScroll: number;
-  dragOrigin: Terminal | null; // The output terminal which is the origin of the drag
-  dragTarget: Terminal | null; // The input terminal which is the origin of the drag
-  dragX: number; // The current drag coordinates
+  pointerId: number;
+  dragX: number;
   dragY: number;
-  dragValid: boolean;
-  editConnection: Connection | null;
+  dragXOffset: number;
+  dragYOffset: number;
+  dragNode: GraphNode | null;
+  dragSource: OutputTerminal | null;
+  dragSink: InputTerminal | null;
 }
 
-@observer
-export class GraphView extends Component<Props, State> {
-  private base = createRef<HTMLElement>();
+const useGraphDrag = (graph: Graph, xScroll: number, yScroll: number) => {
+  const [dragType, setDragType] = useState<DragType>(null);
+  const [dxScroll, setDXScroll] = useState(0);
+  const [dyScroll, setDYScroll] = useState(0);
+  const [dragConnection, setDragConnection] = useState<JSX.Element | null>(null);
+  const [editConnection, setEditConnection] = useState<Connection | null>(null);
+  const [activeTerminal, setActiveTerminal] = useState<Terminal | null>(null);
+  const [state] = useState<State>(() => ({
+    pointerId: -1,
+    dragX: 0,
+    dragY: 0,
+    dragXOffset: 0,
+    dragYOffset: 0,
+    dragNode: null,
+    dragSource: null,
+    dragSink: null,
+  }));
 
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      xScroll: 0,
-      yScroll: 0,
-      dragOrigin: null,
-      dragTarget: null,
-      dragX: 0,
-      dragY: 0,
-      dragValid: false,
-      editConnection: null,
-    };
-  }
+  const pickGraphEntity = useCallback(
+    (x: number, y: number): GraphNode | Terminal | undefined => {
+      let elt = document.elementFromPoint(x, y);
+      while (elt) {
+        if (elt instanceof HTMLElement) {
+          if (elt.dataset.terminal) {
+            const node = graph.findNode(Number(elt.dataset.node));
+            return node?.findTerminal(elt.dataset.terminal);
+          } else if (elt.dataset.node) {
+            return graph.findNode(Number(elt.dataset.node));
+          }
+        }
+        elt = elt.parentElement;
+      }
+    },
+    [graph]
+  );
 
-  public render() {
-    const { graph } = this.props;
-    const { xScroll, yScroll } = this.state;
-    const bounds = graph.bounds;
-    return (
-      <GraphElt
-        ref={this.base}
-        id="graph"
-        onDragEnter={this.onDragEnter}
-        onDragOver={this.onDragOver}
-        onDragLeave={this.onDragLeave}
-        onDrop={this.onDrop}
-        onMouseMove={this.onMouseMove}
-        onMouseUp={this.onMouseUp}
-      >
-        <GVBackdrop className="backdrop" onMouseDown={this.onMouseDown} />
-        <GVScroll
-          className="scroll"
-          style={{ left: `${xScroll}px`, top: `${yScroll}px` }}
-        >
-          <DragContext.Provider
-            value={{
-              graph,
-              getDragOrigin: this.onGetDragOrigin,
-              getDragTarget: this.onGetDragTarget,
-              setDragOrigin: this.onSetDragOrigin,
-              setDragTarget: this.onSetDragTarget,
-            }}
-          >
-            {graph.nodes.map(node => (
-              <NodeRendition key={node.id} node={node} graph={graph} onScroll={this.onScroll} />
-            ))}
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              style={{ position: 'absolute', left: `${bounds.xMin}px`, top: `${bounds.yMin}px` }}
-              viewBox={`${bounds.xMin} ${bounds.yMin} ${bounds.width} ${bounds.height}`}
-              className="connectors"
-              width={bounds.width}
-              height={bounds.height}
-              onMouseDown={this.onCanvasMouseDown}
-            >
-              {graph.nodes.map(node => this.renderNodeConnections(node))}
-              {this.renderDragConnection()}
-            </svg>
-          </DragContext.Provider>
-        </GVScroll>
-        <CompassRose onScroll={this.onScroll} />
-      </GraphElt>
-    );
-  }
+  const updateScrollVelocity = useCallback((e: React.PointerEvent) => {
+    const graphEl = e.currentTarget as HTMLElement;
+    let dxScroll = 0;
+    if (e.clientX < graphEl.offsetLeft) {
+      dxScroll = -1;
+    } else if (e.clientX > graphEl.offsetLeft + graphEl.offsetWidth) {
+      dxScroll = 1;
+    }
+    setDXScroll(dxScroll);
 
-  private renderNodeConnections(node: GraphNode) {
-    const result: JSX.Element[] = [];
+    let dyScroll = 0;
+    if (e.clientY < graphEl.offsetTop) {
+      dyScroll = -1;
+    } else if (e.clientY > graphEl.offsetTop + graphEl.offsetHeight) {
+      dyScroll = 1;
+    }
+    setDYScroll(dyScroll);
+  }, []);
+
+  const onPointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      const entity = pickGraphEntity(e.clientX, e.clientY);
+      if (entity) {
+        if (entity instanceof GraphNode) {
+          runInAction(() => {
+            if (e.ctrlKey || e.metaKey) {
+              entity.selected = !entity.selected;
+            } else if (!entity.selected) {
+              if (!e.shiftKey) {
+                graph.clearSelection();
+              }
+              entity.selected = true;
+            }
+          });
+
+          if (entity.selected) {
+            state.dragXOffset = e.clientX - entity.x - xScroll;
+            state.dragYOffset = e.clientY - entity.y - yScroll;
+            state.dragNode = entity;
+            state.pointerId = e.pointerId;
+            e.currentTarget.setPointerCapture(e.pointerId);
+            setDragType('node');
+          }
+        } else if (entity instanceof AbstractTerminal) {
+          const rect = e.currentTarget.getBoundingClientRect();
+          state.dragX = e.clientX - rect.left - xScroll;
+          state.dragY = e.clientY - rect.top - yScroll;
+          setActiveTerminal(null);
+          if (isOutputTerminal(entity)) {
+            state.dragSource = entity;
+            state.dragSink = null;
+            setDragType('input'); // Dragging *to* an input terminal
+          } else if (isInputTerminal(entity)) {
+            state.dragSource = null;
+            state.dragSink = entity;
+            setDragType('output'); // Dragging *to* an output terminal
+          }
+          state.pointerId = e.pointerId;
+          e.currentTarget.setPointerCapture(e.pointerId);
+
+          setDragConnection(
+            <ConnectionRendition
+              ts={state.dragSource}
+              xs={state.dragX}
+              ys={state.dragY}
+              te={state.dragSink}
+              xe={state.dragX}
+              ye={state.dragY}
+              pending={!state.dragSource || !state.dragSink}
+            />
+          );
+        }
+      } else {
+        graph.clearSelection();
+      }
+    },
+    [state, graph, pickGraphEntity, xScroll, yScroll]
+  );
+
+  const onPointerMoveNode = useCallback(
+    (e: React.PointerEvent) => {
+      const graphEl = e.currentTarget as HTMLElement;
+      runInAction(() => {
+        if (state.dragNode) {
+          state.dragNode.x = quantize(
+            Math.min(
+              graphEl.offsetLeft + graphEl.offsetWidth,
+              Math.max(graphEl.offsetLeft, e.clientX)
+            ) -
+              state.dragXOffset -
+              xScroll
+          );
+          state.dragNode.y = quantize(
+            Math.min(
+              graphEl.offsetTop + graphEl.offsetHeight,
+              Math.max(graphEl.offsetTop, e.clientY)
+            ) -
+              state.dragYOffset -
+              yScroll
+          );
+        }
+        graph.modified = true;
+      });
+
+      updateScrollVelocity(e);
+    },
+    [graph, state, updateScrollVelocity, xScroll, yScroll]
+  );
+
+  const onPointerMoveConnection = useCallback(
+    (e: React.PointerEvent) => {
+      const rect = e.currentTarget.getBoundingClientRect();
+      state.dragX = e.clientX - rect.left - xScroll;
+      state.dragY = e.clientY - rect.top - yScroll;
+
+      const entity = pickGraphEntity(e.clientX, e.clientY);
+      if (dragType === 'input') {
+        state.dragSink =
+          entity &&
+          entity instanceof AbstractTerminal &&
+          isInputTerminal(entity) &&
+          state.dragSource &&
+          !graph.detectCycle(state.dragSource, entity)
+            ? entity
+            : null;
+        setActiveTerminal(state.dragSink);
+      } else {
+        state.dragSource =
+          entity &&
+          entity instanceof AbstractTerminal &&
+          isOutputTerminal(entity) &&
+          state.dragSink &&
+          !graph.detectCycle(entity, state.dragSink)
+            ? entity
+            : null;
+        setActiveTerminal(state.dragSource);
+      }
+
+      setDragConnection(
+        <ConnectionRendition
+          ts={state.dragSource}
+          xs={state.dragX}
+          ys={state.dragY}
+          te={state.dragSink}
+          xe={state.dragX}
+          ye={state.dragY}
+          pending={!state.dragSource || !state.dragSink}
+        />
+      );
+
+      updateScrollVelocity(e);
+    },
+    [state, dragType, graph, pickGraphEntity, updateScrollVelocity, xScroll, yScroll]
+  );
+
+  const onPointerUp = useCallback(
+    (e: React.PointerEvent) => {
+      runInAction(() => {
+        if (dragType === 'input' || dragType === 'output') {
+          if (editConnection) {
+            editConnection.source.disconnect(editConnection);
+            editConnection.dest.connection = null;
+          }
+
+          if (state.dragSource && state.dragSink) {
+            graph.connectTerminals(state.dragSource, state.dragSink);
+          }
+        }
+      });
+
+      e.currentTarget.releasePointerCapture(state.pointerId);
+      setDragType(null);
+      setDragConnection(null);
+      setEditConnection(null);
+      setActiveTerminal(null);
+      setDXScroll(0);
+      setDYScroll(0);
+      state.dragSource = null;
+      state.dragSink = null;
+      state.pointerId = -1;
+    },
+    [dragType, state, editConnection, graph]
+  );
+
+  const onConnectionPointerDown = useCallback(
+    (e: React.PointerEvent<SVGElement>) => {
+      e.stopPropagation();
+      const sourceId = e.currentTarget.dataset.source?.split(':', 2);
+      const sinkId = e.currentTarget.dataset.sink?.split(':');
+      const ts = sourceId ? graph.findOutputTerminal(sourceId[0], sourceId[1]) : undefined;
+      const te = sinkId ? graph.findInputTerminal(sinkId[0], sinkId[1]) : undefined;
+      const connection = te && te.connection;
+
+      if (ts && te && connection) {
+        const svgDoc = e.currentTarget.parentNode as SVGSVGElement;
+        const graphEl = svgDoc.parentElement!;
+
+        // Determine which endpoint is closer to the pointer coordinates. That's the one to drag.
+        const clientRect = svgDoc.getBoundingClientRect();
+        const x = e.clientX - clientRect.left + svgDoc.viewBox.baseVal.x;
+        const y = e.clientY - clientRect.top + svgDoc.viewBox.baseVal.y;
+
+        const de = (x - te.x - te.node.x - 10) ** 2 + (y - te.y - te.node.y - 10) ** 2;
+        const ds = (x - ts.x - ts.node.x - 10) ** 2 + (y - ts.y - ts.node.y - 10) ** 2;
+
+        const rect = graphEl.getBoundingClientRect();
+        state.dragX = e.clientX - rect.left;
+        state.dragY = e.clientY - rect.top;
+
+        if (ds > de) {
+          state.dragSource = ts;
+          state.dragSink = null;
+          setDragType('input'); // Dragging *to* an input terminal
+        } else {
+          state.dragSource = null;
+          state.dragSink = te;
+          setDragType('output'); // Dragging *to* an output terminal
+        }
+
+        state.pointerId = e.pointerId;
+        graphEl.setPointerCapture(e.pointerId);
+
+        setDragConnection(
+          <ConnectionRendition
+            ts={state.dragSource}
+            xs={state.dragX}
+            ys={state.dragY}
+            te={state.dragSink}
+            xe={state.dragX}
+            ye={state.dragY}
+            pending={!state.dragSource || !state.dragSink}
+          />
+        );
+        setEditConnection(connection);
+      }
+    },
+    [graph, state]
+  );
+
+  useEffect(
+    action(() => {
+      if (activeTerminal) {
+        activeTerminal.hover = true;
+        return action(() => {
+          activeTerminal.hover = false;
+        });
+      }
+    }),
+    [activeTerminal]
+  );
+
+  // Methods to spread into graph element
+  const dragMethods = {
+    onPointerDown,
+    ...(dragType === 'node' && {
+      onPointerMove: onPointerMoveNode,
+      onPointerUp,
+    }),
+    ...((dragType === 'input' || dragType === 'output') && {
+      onPointerMove: onPointerMoveConnection,
+      onPointerUp,
+    }),
+  };
+
+  // Methods to spread into connection element
+  const connMethods = {
+    onPointerDown: onConnectionPointerDown,
+  };
+
+  return {
+    dragMethods,
+    connMethods,
+    dragConnection,
+    editConnection,
+    dxScroll,
+    dyScroll,
+  };
+};
+
+export const GraphView: FC<Props> = observer(({ graph }) => {
+  const scrollEl = useRef<HTMLDivElement>(null);
+  const [xScroll, setXScroll] = useState(0);
+  const [yScroll, setYScroll] = useState(0);
+
+  const onScroll = useCallback(
+    (dx: number, dy: number) => {
+      setXScroll(xScroll + dx);
+      setYScroll(yScroll + dy);
+    },
+    [xScroll, yScroll]
+  );
+
+  const dndMethods = useNodeDropTarget(graph, xScroll, yScroll);
+  const {
+    dragMethods,
+    connMethods,
+    dragConnection,
+    editConnection,
+    dxScroll,
+    dyScroll,
+  } = useGraphDrag(graph, xScroll, yScroll);
+
+  useEffect(() => {
+    if (dxScroll !== 0 || dyScroll !== 0) {
+      const timer = window.setInterval(() => {
+        onScroll(-dxScroll * 10, -dyScroll * 10);
+      }, 16);
+
+      return () => window.clearInterval(timer);
+    }
+  }, [onScroll, dxScroll, dyScroll]);
+
+  const bounds = graph.bounds;
+
+  const connections: JSX.Element[] = [];
+  for (const node of graph.nodes) {
     for (const output of node.outputs) {
       for (const connection of output.connections) {
         const input = connection.dest;
-        if (connection === this.state.editConnection) {
+        if (
+          editConnection &&
+          connection.dest === editConnection.dest &&
+          connection.source === editConnection.source
+        ) {
           continue;
         }
-        result.push(
+        connections.push(
           <ConnectionRendition
+            {...connMethods}
             key={`${node.id}_${output.id}_${input.node.id}_${input.id}`}
             ts={connection.source}
             te={connection.dest}
             connection={connection}
-            onEdit={this.onEditConnection}
           />
         );
       }
     }
-    return result;
   }
 
-  private renderDragConnection(): JSX.Element | null {
-    const { dragOrigin, dragTarget, dragX, dragY, dragValid } = this.state;
-    // In order for there to be a drag preview:
-    // There must either be both an origin or a target
-    // Or there must be a valid drag coordinate (dragValid) and either an origin or target
-    if (dragOrigin || (dragTarget && ((dragOrigin && dragTarget) || dragValid))) {
-      let dragStart: Terminal | null = null;
-      let dragEnd: Terminal | null = null;
-      // Input on the left, output on the right.
-      if ((dragOrigin && dragOrigin.output) || (dragTarget && !dragTarget.output)) {
-        dragStart = dragOrigin;
-        dragEnd = dragTarget;
-      } else {
-        dragStart = dragTarget;
-        dragEnd = dragOrigin;
-      }
-      return (
-        <ConnectionRendition
-          ts={dragStart}
-          xs={dragX}
-          ys={dragY}
-          te={dragEnd}
-          xe={dragX}
-          ye={dragY}
-          pending={!dragOrigin || !dragTarget}
-        />
-      );
-    }
-    return null;
-  }
-
-  @action.bound
-  private onMouseDown(e: React.MouseEvent) {
-    e.preventDefault();
-    this.props.graph.clearSelection();
-  }
-
-  @bind
-  private onMouseMove(e: React.MouseEvent) {
-    // We can't use HTML5 DnD on SVG elements, so do it the hard way
-    if (this.state.editConnection) {
-      const { graph } = this.props;
-      const { dragOrigin } = this.state;
-      const target = e.target as HTMLElement;
-      const classes = (target.getAttribute('class') || '').split(/\s+/);
-      if (dragOrigin && classes.indexOf('terminal') >= 0) {
-        const terminal = this.props.graph.findTerminal(
-          parseInt(target.dataset.node || '', 10),
-          target.dataset.id || ''
-        );
-        if (terminal) {
-          console.log(terminal.output, dragOrigin.output);
-        }
-        if (
-          terminal &&
-          terminal.output !== dragOrigin.output &&
-          !graph.detectCycle(dragOrigin, terminal)
-        ) {
-          this.setState({
-            dragTarget: terminal,
-          });
-          return;
-        }
-      }
-
-      if (this.base.current) {
-        this.setState({
-          dragX: e.clientX - this.base.current.offsetLeft - this.state.xScroll,
-          dragY: e.clientY - this.base.current.offsetTop - this.state.yScroll,
-          dragValid: true,
-          dragTarget: null,
-        });
-      }
-    }
-  }
-
-  @action.bound
-  private onMouseUp(e: React.MouseEvent) {
-    // We can't use HTML5 DnD on SVG elements, so do it the hard way
-    const { editConnection, dragOrigin, dragTarget } = this.state;
-    if (editConnection && dragOrigin) {
-      if (dragTarget === null) {
-        editConnection.source.disconnect(editConnection);
-        editConnection.dest.connection = null;
-      } else {
-        const { graph } = this.props;
-        editConnection.source.disconnect(editConnection);
-        editConnection.dest.connection = null;
-        if (dragOrigin.output) {
-          graph.connectTerminals(dragOrigin as OutputTerminal, dragTarget as InputTerminal);
-        } else {
-          graph.connectTerminals(dragTarget as OutputTerminal, dragOrigin as InputTerminal);
-        }
-      }
-      this.setState({
-        editConnection: null,
-        dragOrigin: null,
-        dragValid: false,
-      });
-    }
-  }
-
-  @action.bound
-  private onCanvasMouseDown(e: React.MouseEvent) {
-    e.preventDefault();
-    this.props.graph.clearSelection();
-  }
-
-  @bind
-  private onScroll(dx: number, dy: number) {
-    this.setState({ xScroll: this.state.xScroll + dx, yScroll: this.state.yScroll + dy });
-  }
-
-  @bind
-  private onDragEnter(e: React.DragEvent) {
-    if (e.dataTransfer.types.indexOf('application/x-vortex-operator') >= 0) {
-      e.preventDefault();
-    }
-    if (this.base.current) {
-      this.setState({
-        dragX: e.clientX - this.base.current.offsetLeft - this.state.xScroll,
-        dragY: e.clientY - this.base.current.offsetTop - this.state.yScroll,
-        dragValid: true,
-      });
-    }
-  }
-
-  @bind
-  private onDragOver(e: React.DragEvent) {
-    if (e.dataTransfer.types.indexOf('application/x-vortex-operator') >= 0) {
-      e.preventDefault();
-    }
-    if (this.base.current) {
-      this.setState({
-        dragX: e.clientX - this.base.current.offsetLeft - this.state.xScroll,
-        dragY: e.clientY - this.base.current.offsetTop - this.state.yScroll,
-        dragValid: true,
-      });
-    }
-  }
-
-  @bind
-  private onDragLeave(e: React.DragEvent) {
-    this.setState({ dragValid: false });
-  }
-
-  @action.bound
-  private onDrop(e: React.DragEvent) {
-    const data = e.dataTransfer.getData('application/x-vortex-operator');
-    if (data && this.base.current) {
-      this.props.graph.clearSelection();
-      const op = registry.get(data);
-      const node = new GraphNode(op, this.props.graph.nextId());
-      node.x = quantize(e.clientX - this.base.current.offsetLeft - this.state.xScroll - 45);
-      node.y = quantize(e.clientY - this.base.current.offsetTop - this.state.yScroll - 60);
-      node.selected = true;
-      this.props.graph.add(node);
-    }
-  }
-
-  @bind
-  private onGetDragOrigin() {
-    return this.state.dragOrigin;
-  }
-
-  @bind
-  private onGetDragTarget() {
-    return this.state.dragTarget;
-  }
-
-  @bind
-  private onSetDragOrigin(terminal: Terminal) {
-    this.setState({ dragOrigin: terminal, dragValid: false });
-    if (terminal) {
-      this.setState({
-        dragX: terminal.x + terminal.node.x,
-        dragY: terminal.y + terminal.node.y,
-      });
-    }
-  }
-
-  @bind
-  private onSetDragTarget(terminal: Terminal) {
-    this.setState({ dragTarget: terminal });
-  }
-
-  @bind
-  private onEditConnection(connection: Connection, output: boolean) {
-    if (output) {
-      this.setState({
-        editConnection: connection,
-        dragOrigin: connection.source,
-        dragTarget: null,
-        dragX: connection.dest.node.x + connection.dest.x,
-        dragY: connection.dest.node.y + connection.dest.y,
-      });
-    } else {
-      this.setState({
-        editConnection: connection,
-        dragOrigin: connection.dest,
-        dragTarget: null,
-        dragX: connection.source.node.x + connection.source.x,
-        dragY: connection.source.node.y + connection.source.y,
-      });
-    }
-  }
-}
+  return (
+    <GraphElt {...dndMethods} {...dragMethods} id="graph">
+      <GVBackdrop className="backdrop" />
+      <GVScroll
+        ref={scrollEl}
+        className="scroll"
+        style={{ left: `${xScroll}px`, top: `${yScroll}px` }}
+      >
+        {graph.nodes.map(node => (
+          <NodeRendition key={node.id} node={node} graph={graph} onScroll={onScroll} />
+        ))}
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          style={{ position: 'absolute', left: `${bounds.xMin}px`, top: `${bounds.yMin}px` }}
+          viewBox={`${bounds.xMin} ${bounds.yMin} ${bounds.width} ${bounds.height}`}
+          className="connectors"
+          width={bounds.width}
+          height={bounds.height}
+        >
+          {connections}
+          {dragConnection}
+        </svg>
+      </GVScroll>
+      <CompassRose onScroll={onScroll} />
+    </GraphElt>
+  );
+});
