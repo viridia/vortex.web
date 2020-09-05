@@ -1,19 +1,30 @@
 import { DataType, Input, Operator, Output, Parameter } from '..';
-import { Expr } from '../../render/Expr';
+import { ExprNode, defineFn, refInput, refTexCoords, refUniform } from '../../render/ExprNode';
 import { GraphNode } from '../../graph';
-import { ShaderAssembly } from '../../render/ShaderAssembly';
+
+const IMPORTS = new Set(['hsv', 'color-adjust']);
+
+export const colorAdjust = defineFn({
+  name: 'colorAdjust',
+  result: DataType.VEC4,
+  args: [DataType.VEC4, DataType.FLOAT, DataType.FLOAT, DataType.FLOAT, DataType.FLOAT],
+});
 
 class ColorAdjust extends Operator {
-  public readonly inputs: Input[] = [{
-    id: 'in',
-    name: 'In',
-    type: DataType.RGBA,
-  }];
-  public readonly outputs: Output[] = [{
-    id: 'out',
-    name: 'Out',
-    type: DataType.RGBA,
-  }];
+  public readonly inputs: Input[] = [
+    {
+      id: 'in',
+      name: 'In',
+      type: DataType.VEC4,
+    },
+  ];
+  public readonly outputs: Output[] = [
+    {
+      id: 'out',
+      name: 'Out',
+      type: DataType.VEC4,
+    },
+  ];
   public readonly params: Parameter[] = [
     {
       id: 'contrast',
@@ -59,19 +70,15 @@ class ColorAdjust extends Operator {
     super('filter', 'Color Adjust', 'filter_color_adjust');
   }
 
-  public readOutputValue(assembly: ShaderAssembly, node: GraphNode, out: string, uv: Expr): Expr {
-    if (assembly.start(node)) {
-      assembly.declareUniforms(this, node.id, this.params);
-      assembly.addCommon('hsv', 'color-adjust');
-      assembly.finish(node);
-    }
+  public getImports(node: GraphNode): Set<string> {
+    return IMPORTS;
+  }
 
-    const inputA = assembly.readInputValue(node, 'in', uv);
-    const args = [
-      inputA,
-      ...this.params.map(param => assembly.uniform(node, param.id)),
-    ];
-    return assembly.call('colorAdjust', args, DataType.RGBA);
+  public getCode(node: GraphNode): ExprNode {
+    return colorAdjust(
+      refInput('in', DataType.VEC4, node, refTexCoords()),
+      ...this.params.map(param => refUniform(param.id, param.type, node))
+    );
   }
 }
 

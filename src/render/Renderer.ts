@@ -56,15 +56,15 @@ export class Renderer {
     node: GraphNode,
     width: number,
     height: number,
-    out: CanvasRenderingContext2D,
-    rebuildShader: boolean = false
+    out: CanvasRenderingContext2D
   ) {
+    const shaderSource = node.source;
     this.canvas.width = width;
     this.canvas.height = height;
 
     const gl = this.gl;
 
-    if (rebuildShader) {
+    if (shaderSource !== node.prevSource) {
       this.deleteShaderResources(node.glResources);
     }
 
@@ -74,7 +74,7 @@ export class Renderer {
         const input = connection.dest.node.operator.getInput(connection.dest.id);
         if (input.buffered) {
           // TODO: We don't always need to redraw this every time.
-          this.renderNodeToBuffer(upstreamNode, connection.dest.node, input.id, rebuildShader);
+          this.renderNodeToBuffer(upstreamNode, connection.dest.node, input.id);
         }
       });
     }
@@ -84,17 +84,21 @@ export class Renderer {
     gl.clearColor(0.0, 0.0, 0.0, 1.0); // Clear to black, fully opaque
     gl.clear(gl.COLOR_BUFFER_BIT);
     this.invertY = false;
-    node.operator.renderNode(this, node);
+    if (!node.glResources?.program) {
+      node.prevSource = shaderSource;
+      this.compileShaderProgram(shaderSource, node);
+    }
+    this.renderNode(node);
     out.drawImage(this.canvas, 0, 0);
   }
 
   // Render a node to a texture buffer, used by nodes that have buffered inputs.
-  public renderNodeToBuffer(
+  private renderNodeToBuffer(
     srcNode: GraphNode,
     dstNode: GraphNode,
-    inputId: string,
-    rebuildShader: boolean
+    inputId: string
   ) {
+    const shaderSource = srcNode.source;
     const gl = this.gl;
     const width: number = nextHighestPowerOfTwo(this.canvas.width);
     const height: number = nextHighestPowerOfTwo(this.canvas.height);
@@ -102,7 +106,7 @@ export class Renderer {
     this.nextTextureUnit = 0;
 
     // We're rendering the source node and caching the result on the destination node.
-    if (rebuildShader) {
+    if (shaderSource !== srcNode.prevSource) {
       this.deleteShaderResources(srcNode.ensureGLResources());
     }
 
@@ -132,7 +136,11 @@ export class Renderer {
     gl.clear(gl.COLOR_BUFFER_BIT);
 
     this.invertY = true;
-    srcNode.operator.renderNode(this, srcNode);
+    if (!srcNode.glResources?.program) {
+      srcNode.prevSource = shaderSource;
+      this.compileShaderProgram(shaderSource, srcNode);
+    }
+    this.renderNode(srcNode);
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
@@ -141,6 +149,25 @@ export class Renderer {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     // gl.generateMipmap(gl.TEXTURE_2D);
     gl.bindTexture(gl.TEXTURE_2D, null);
+  }
+
+  // Render a node with the specified renderer.
+  public renderNode(node: GraphNode): void {
+    const program: WebGLProgram = node.glResources?.program!;
+    if (program) {
+      this.executeShaderProgram(node, gl => {
+        // Set the uniforms for this node and all upstream nodes.
+        this.setShaderUniforms(node, program);
+        for (const input of node.operator.inputs) {
+          if (input.buffered) {
+            this.setShaderInputBufferUniforms(node, program, input.id);
+          }
+        }
+        node.visitUpstreamNodes((upstream, connection) => {
+          this.setShaderUniforms(upstream, program);
+        });
+      });
+    }
   }
 
   public executeShaderProgram(
@@ -189,6 +216,7 @@ export class Renderer {
     for (const param of params) {
       const value = paramValues.has(param.id) ? paramValues.get(param.id) : param.default;
       const uniformName = node.operator.uniformName(node.id, param.id);
+      // console.log('   *', uniformName, value);
       switch (param.type) {
         case DataType.INTEGER:
           gl.uniform1i(
@@ -202,7 +230,7 @@ export class Renderer {
             value !== undefined ? value : 0
           );
           break;
-        case DataType.RGBA:
+        case DataType.VEC4:
           if (value !== undefined) {
             gl.uniform4f(
               gl.getUniformLocation(program, uniformName),
@@ -244,7 +272,11 @@ export class Renderer {
           break;
         }
         case DataType.IMAGE: {
-          this.bindTexture(program, node.getTexture(param.id), uniformName);
+          if (value) {
+            this.bindTexture(program, node.getTexture(param.id), uniformName);
+          } else {
+            this.bindTexture(program, undefined, uniformName);
+          }
           break;
         }
       }
@@ -252,7 +284,10 @@ export class Renderer {
   }
 
   public setShaderInputBufferUniforms(node: GraphNode, program: WebGLProgram, id: string) {
-    this.bindTexture(program, node.getTexture(id), node.operator.uniformName(node.id, id));
+    const input = node.getInputTerminal(id);
+    if (input.connection) {
+      this.bindTexture(program, node.getTexture(id), node.operator.uniformName(node.id, id));
+    }
   }
 
   public bindTexture(
@@ -263,7 +298,6 @@ export class Renderer {
     const gl = this.gl;
     gl.activeTexture(gl.TEXTURE0 + this.nextTextureUnit);
     if (texture) {
-      // console.log('texture ok:', uniformName, this.nextTextureUnit);
       gl.bindTexture(gl.TEXTURE_2D, texture);
     } else {
       gl.bindTexture(gl.TEXTURE_2D, null);

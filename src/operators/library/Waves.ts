@@ -1,14 +1,35 @@
 import { DataType, Operator, Output, Parameter } from '..';
-import { Expr } from '../../render/Expr';
+import { ExprNode, defineFn, refTexCoords, refUniform } from '../../render/ExprNode';
 import { GraphNode } from '../../graph';
-import { ShaderAssembly } from '../../render/ShaderAssembly';
+
+const IMPORTS = new Set(['waves2']);
+
+export const waves = defineFn({
+  name: 'waves2',
+  result: DataType.FLOAT,
+  args: [
+    DataType.VEC2,
+    DataType.INTEGER,
+    DataType.INTEGER,
+    DataType.FLOAT,
+    DataType.INTEGER,
+    DataType.INTEGER,
+    DataType.FLOAT,
+    DataType.INTEGER,
+    DataType.INTEGER,
+    DataType.FLOAT,
+    DataType.FLOAT,
+  ],
+});
 
 class Waves extends Operator {
-  public readonly outputs: Output[] = [{
-    id: 'out',
-    name: 'Out',
-    type: DataType.RGBA,
-  }];
+  public readonly outputs: Output[] = [
+    {
+      id: 'out',
+      name: 'Out',
+      type: DataType.FLOAT,
+    },
+  ];
 
   public readonly params: Parameter[] = [
     {
@@ -119,55 +140,33 @@ class Waves extends Operator {
       default: 0.5,
       precision: 2,
     },
-    {
-      id: 'color',
-      name: 'Color',
-      type: DataType.RGBA_GRADIENT,
-      max: 32,
-      default: [
-        {
-          value: [0, 0, 0, 1],
-          position: 0,
-        },
-        {
-          value: [1, 1, 1, 1],
-          position: 1,
-        },
-      ],
-    },
   ];
   public readonly description = `
 Sums together up to three wave generators.
 `;
 
   constructor() {
-    super('generator', 'Waves', 'generator_waves');
+    super('generator', 'Waves', 'gen_waves');
   }
 
-  public readOutputValue(assembly: ShaderAssembly, node: GraphNode, out: string, uv: Expr): Expr {
-    if (assembly.start(node)) {
-      assembly.declareUniforms(this, node.id, this.params);
-      assembly.addCommon('gradient-color', 'waves');
-      assembly.finish(node);
-    }
+  public getImports(node: GraphNode): Set<string> {
+    return IMPORTS;
+  }
 
-    const colorName = this.uniformName(node.id, 'color');
-    const args = [
-      uv,
-      assembly.uniform(node, 'fx0'),
-      assembly.uniform(node, 'fy0'),
-      assembly.uniform(node, 'phase0'),
-      assembly.uniform(node, 'fx1'),
-      assembly.uniform(node, 'fy1'),
-      assembly.uniform(node, 'phase1'),
-      assembly.uniform(node, 'fx2'),
-      assembly.uniform(node, 'fy2'),
-      assembly.uniform(node, 'phase2'),
-      assembly.uniform(node, 'amplitude'),
-      assembly.ident(`${colorName}_colors`, DataType.OTHER),
-      assembly.ident(`${colorName}_positions`, DataType.OTHER),
-    ];
-    return assembly.call('waves', args, DataType.RGBA);
+  public getCode(node: GraphNode): ExprNode {
+    return waves(
+      refTexCoords(),
+      refUniform('fx0', DataType.INTEGER, node),
+      refUniform('fy0', DataType.INTEGER, node),
+      refUniform('phase0', DataType.FLOAT, node),
+      refUniform('fx1', DataType.INTEGER, node),
+      refUniform('fy1', DataType.INTEGER, node),
+      refUniform('phase1', DataType.FLOAT, node),
+      refUniform('fx2', DataType.INTEGER, node),
+      refUniform('fy2', DataType.INTEGER, node),
+      refUniform('phase2', DataType.FLOAT, node),
+      refUniform('amplitude', DataType.FLOAT, node)
+    );
   }
 }
 

@@ -1,19 +1,21 @@
 import { DataType, Operator, Output, Parameter } from '..';
-import { Expr } from '../../render/Expr';
+import { ExprNode, refUniform } from '../../render/ExprNode';
 import { GraphNode } from '../../graph';
-import { ShaderAssembly } from '../../render/ShaderAssembly';
 
 class ConstantColor extends Operator {
-  public readonly outputs: Output[] = [{
-    id: 'out',
-    name: 'Out',
-    type: DataType.RGBA,
-  }];
+  public readonly outputs: Output[] = [
+    {
+      id: 'out',
+      name: 'Out',
+      type: DataType.VEC4,
+    },
+  ];
   public readonly params: Parameter[] = [
     {
       id: 'color',
       name: 'Color',
-      type: DataType.RGBA,
+      type: DataType.VEC4,
+      editor: 'color',
       default: [1.0, 1.0, 1.0, 1.0],
     },
   ];
@@ -22,16 +24,11 @@ A constant color.
 `;
 
   constructor() {
-    super('generator', 'Constant Color', 'generator_constant_color');
+    super('generator', 'Constant Color', 'gen_constant_color');
   }
 
-  public readOutputValue(assembly: ShaderAssembly, node: GraphNode, out: string, uv: Expr): Expr {
-    if (assembly.start(node)) {
-      assembly.declareUniforms(this, node.id, this.params);
-      assembly.finish(node);
-    }
-
-    return assembly.uniform(node, 'color');
+  public getCode(node: GraphNode): ExprNode {
+    return refUniform('color', DataType.VEC4, node);
   }
 }
 

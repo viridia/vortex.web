@@ -1,21 +1,47 @@
 import { DataType, Input, Operator, Output, Parameter } from '..';
-import { Expr } from '../../render/Expr';
+import {
+  ExprNode,
+  add,
+  defineFn,
+  divide,
+  fork,
+  getAttr,
+  literal,
+  multiply,
+  refInput,
+  refTexCoords,
+  refUniform,
+} from '../../render/ExprNode';
 import { GraphNode } from '../../graph';
-import { ShaderAssembly } from '../../render/ShaderAssembly';
+import { cross_3, normalize_3, vec3_2_1, vec4_3_1 } from '../../render/glIntrinsics';
+
+export const dFdx = defineFn({
+  name: 'dFdx',
+  result: DataType.VEC3,
+  args: [DataType.VEC3],
+});
+
+export const dFdy = defineFn({
+  name: 'dFdy',
+  result: DataType.VEC3,
+  args: [DataType.VEC3],
+});
 
 class NormalMap extends Operator {
   public readonly inputs: Input[] = [
     {
       id: 'in',
       name: 'In',
-      type: DataType.RGBA,
+      type: DataType.VEC4,
     },
   ];
-  public readonly outputs: Output[] = [{
-    id: 'out',
-    name: 'Out',
-    type: DataType.RGBA,
-  }];
+  public readonly outputs: Output[] = [
+    {
+      id: 'out',
+      name: 'Out',
+      type: DataType.VEC4,
+    },
+  ];
 
   public readonly params: Parameter[] = [
     {
@@ -34,33 +60,62 @@ class NormalMap extends Operator {
 Treating the grayscale input as a height map, computes normals.
 `;
 
-  constructor() {
-    super('filter', 'Normal Map', 'filter_normal_map');
+  public getCode(node: GraphNode): ExprNode {
+    const scale = refUniform('scale', DataType.FLOAT, node);
+    const uv = fork(refTexCoords(), 'uv');
+    const t = fork(refInput('in', DataType.VEC4, node, uv), 't');
+    const h = fork(
+      divide(
+        multiply(
+          add(
+            add(getAttr(t, 'x', DataType.FLOAT), getAttr(t, 'y', DataType.FLOAT), DataType.FLOAT),
+            getAttr(t, 'z', DataType.FLOAT),
+            DataType.FLOAT
+          ),
+          scale,
+          DataType.FLOAT
+        ),
+        literal('3.0', DataType.FLOAT),
+        DataType.FLOAT
+      ),
+      'h'
+    );
+    const dx = dFdx(vec3_2_1(uv, h));
+    const dy = dFdy(vec3_2_1(uv, h));
+    const normal = normalize_3(cross_3(dx, dy));
+
+    return vec4_3_1(
+      add(
+        multiply(normal, literal('vec3(0.5, 0.5, -0.5)', DataType.VEC3), DataType.VEC3),
+        literal('0.5', DataType.FLOAT),
+        DataType.VEC3
+      ),
+      literal('1.0', DataType.FLOAT)
+    );
   }
 
-  public readOutputValue(assembly: ShaderAssembly, node: GraphNode, out: string, uv: Expr): Expr {
-    if (assembly.start(node)) {
-      assembly.declareUniforms(this, node.id, this.params);
-      assembly.finish(node);
-    }
+  // public readOutputValue(assembly: ShaderAssembly, node: GraphNode, out: string, uv: Expr): Expr {
+  //   const inputA = assembly.readInputValue(node, 'in', uv);
+  //   const scale = this.uniformName(node.id, 'scale');
+  //   const t = `${this.localPrefix(node.id)}_t`;
+  //   const h = `${this.localPrefix(node.id)}_h`;
+  //   const dx = `${this.localPrefix(node.id)}_dx`;
+  //   const dy = `${this.localPrefix(node.id)}_dy`;
+  //   const normal = `${this.localPrefix(node.id)}_normal`;
+  //   assembly.assign(t, 'vec4', inputA);
+  //   assembly.assign(h, 'float',
+  //       assembly.literal(`(${t}.x + ${t}.y + ${t}.z) * ${scale} / 3.0`, DataType.FLOAT));
+  //   assembly.assign(dx, 'vec3',
+  //       assembly.literal(`dFdx(vec3(vTextureCoord, ${h}))`, DataType.VEC3));
+  //   assembly.assign(dy, 'vec3',
+  //       assembly.literal(`dFdy(vec3(vTextureCoord, ${h}))`, DataType.VEC3));
+  //   assembly.assign(normal, 'vec3',
+  //       assembly.literal(`normalize(cross(${dx}, ${dy}))`, DataType.VEC3));
+  //   return assembly.literal(`vec4(${normal} * vec3(0.5, 0.5, -0.5) + 0.5, 1.0)`, DataType.VEC4);
+  // }
 
-    const inputA = assembly.readInputValue(node, 'in', uv);
-    const scale = this.uniformName(node.id, 'scale');
-    const t = `${this.localPrefix(node.id)}_t`;
-    const h = `${this.localPrefix(node.id)}_h`;
-    const dx = `${this.localPrefix(node.id)}_dx`;
-    const dy = `${this.localPrefix(node.id)}_dy`;
-    const normal = `${this.localPrefix(node.id)}_normal`;
-    assembly.assign(t, 'vec4', inputA);
-    assembly.assign(h, 'float',
-        assembly.literal(`(${t}.x + ${t}.y + ${t}.z) * ${scale} / 3.0`, DataType.FLOAT));
-    assembly.assign(dx, 'vec3',
-        assembly.literal(`dFdx(vec3(vTextureCoord, ${h}))`, DataType.XYZ));
-    assembly.assign(dy, 'vec3',
-        assembly.literal(`dFdy(vec3(vTextureCoord, ${h}))`, DataType.XYZ));
-    assembly.assign(normal, 'vec3',
-        assembly.literal(`normalize(cross(${dx}, ${dy}))`, DataType.XYZ));
-    return assembly.literal(`vec4(${normal} * vec3(0.5, 0.5, -0.5) + 0.5, 1.0)`, DataType.XYZW);
+  constructor() {
+    super('filter', 'Normal Map', 'filter_normal_map');
   }
 }
 

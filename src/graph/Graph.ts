@@ -1,7 +1,7 @@
 import { Bounds } from './Bounds';
-import { ChangeType, GraphNode } from './GraphNode';
 import { Connection } from './Connection';
 import { DataType, Registry } from '../operators';
+import { GraphNode } from './GraphNode';
 import { InputTerminal } from './InputTerminal';
 import { OutputTerminal } from './OutputTerminal';
 import { Terminal } from './Terminal';
@@ -110,8 +110,6 @@ export class Graph {
     };
     src.connections.push(conn);
     dst.connection = conn;
-    src.node.notifyChange(ChangeType.CONNECTION_CHANGED);
-    dst.node.notifyChange(ChangeType.CONNECTION_CHANGED);
     this.modified = true;
   }
 

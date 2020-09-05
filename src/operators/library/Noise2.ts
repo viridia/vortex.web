@@ -1,14 +1,31 @@
 import { DataType, Operator, Output, Parameter } from '..';
-import { Expr } from '../../render/Expr';
+import { ExprNode, defineFn, refTexCoords, refUniform } from '../../render/ExprNode';
 import { GraphNode } from '../../graph';
-import { ShaderAssembly } from '../../render/ShaderAssembly';
+
+const IMPORTS = new Set(['steppers', 'permute', 'pnoise', 'periodic-noise2']);
+
+export const noise2 = defineFn({
+  name: 'periodicNoise2',
+  result: DataType.FLOAT,
+  args: [
+    DataType.VEC2,
+    DataType.INTEGER,
+    DataType.INTEGER,
+    DataType.FLOAT,
+    DataType.INTEGER,
+    DataType.INTEGER,
+    DataType.FLOAT,
+  ],
+});
 
 class Noise extends Operator {
-  public readonly outputs: Output[] = [{
-    id: 'out',
-    name: 'Out',
-    type: DataType.RGBA,
-  }];
+  public readonly outputs: Output[] = [
+    {
+      id: 'out',
+      name: 'Out',
+      type: DataType.FLOAT,
+    },
+  ];
 
   public readonly params: Parameter[] = [
     {
@@ -68,33 +85,24 @@ Generates a periodic Perlin noise texture.
 * **Scale X** is the overall scaling factor along the x-axis.
 * **Scale Y** is the overall scaling factor along the y-axis.
 * **Z Offset** is the z-coordinate within the 3D noise space.
-* **Value Scale** is a multiplier on the output.
 * **Start Band** and **End Band** control the range of frequency bands. Each band represents
   one octave of noise.
 * **Persistance** determines the amplitude falloff from one frequencey band to the next.
 `;
 
   constructor() {
-    super('generator', 'Perlin Noise', 'pattern_pnoise');
+    super('generator', 'Perlin Noise', 'gen_noise');
   }
 
-  public readOutputValue(assembly: ShaderAssembly, node: GraphNode, out: string, uv: Expr): Expr {
-    if (assembly.start(node)) {
-      assembly.declareUniforms(this, node.id, this.params);
-      assembly.addCommon('steppers', 'permute', 'pnoise', 'gradient-color', 'periodic-noise2');
-      assembly.finish(node);
-    }
+  public getCode(node: GraphNode): ExprNode {
+    return noise2(
+      refTexCoords(),
+      ...this.params.map(param => refUniform(param.id, param.type, node))
+    );
+  }
 
-    const args = [
-      uv,
-      assembly.uniform(node, 'scale_x'),
-      assembly.uniform(node, 'scale_y'),
-      assembly.uniform(node, 'offset_z'),
-      assembly.uniform(node, 'start_band'),
-      assembly.uniform(node, 'end_band'),
-      assembly.uniform(node, 'persistence'),
-    ];
-    return assembly.call('periodicNoise2', args, DataType.FLOAT);
+  public getImports(node: GraphNode): Set<string> {
+    return IMPORTS;
   }
 }
 

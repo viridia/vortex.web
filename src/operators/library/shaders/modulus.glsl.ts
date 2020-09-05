@@ -1,13 +1,11 @@
 import glsl from '../glsl';
 
 export default glsl`
-vec4 modulus(
+float modulus(
     float inputVal,
     int frequency,
     float offset,
-    float phase,
-    vec4 color_colors[32],
-    float color_positions[32]) {
+    float phase) {
   float period = 1.0 / float(frequency);
   float v = inputVal + offset * period;
   v = fract(v / period);
@@ -16,7 +14,6 @@ vec4 modulus(
   } else {
     v *= 1.0 / phase;
   }
-  v = smoothstep(0., 1., v);
-  return gradientColor(v, color_colors, color_positions);
+  return smoothstep(0., 1., v);
 }
 `;

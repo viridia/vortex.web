@@ -1,14 +1,33 @@
 import { DataType, Operator, Output, Parameter } from '..';
-import { Expr } from '../../render/Expr';
+import { ExprNode, defineFn, refTexCoords, refUniform } from '../../render/ExprNode';
 import { GraphNode } from '../../graph';
-import { ShaderAssembly } from '../../render/ShaderAssembly';
+
+const IMPORTS = new Set(['steppers', 'hexgrid']);
+
+export const hexgrid = defineFn({
+  name: 'hexgrid',
+  result: DataType.FLOAT,
+  args: [
+    DataType.VEC2,
+    DataType.INTEGER,
+    DataType.INTEGER,
+    DataType.FLOAT,
+    DataType.FLOAT,
+    DataType.FLOAT,
+    DataType.FLOAT,
+    DataType.FLOAT,
+    DataType.INTEGER,
+  ],
+});
 
 class HexGrid extends Operator {
-  public readonly outputs: Output[] = [{
-    id: 'out',
-    name: 'Out',
-    type: DataType.FLOAT,
-  }];
+  public readonly outputs: Output[] = [
+    {
+      id: 'out',
+      name: 'Out',
+      type: DataType.FLOAT,
+    },
+  ];
   public readonly params: Parameter[] = [
     {
       id: 'count_x',
@@ -31,8 +50,8 @@ class HexGrid extends Operator {
       name: 'Margin',
       type: DataType.FLOAT,
       min: 0,
-      max: .5,
-      default: .025,
+      max: 0.5,
+      default: 0.025,
     },
     {
       id: 'roundness',
@@ -48,22 +67,22 @@ class HexGrid extends Operator {
       name: 'Blur',
       type: DataType.FLOAT,
       min: 0,
-      max: .5,
-      default: .1,
+      max: 0.5,
+      default: 0.1,
     },
     {
       id: 'offset_x',
       name: 'Offset X',
       type: DataType.FLOAT,
       min: 0,
-      max: .5,
+      max: 0.5,
     },
     {
       id: 'offset_y',
       name: 'Offset Y',
       type: DataType.FLOAT,
       min: 0,
-      max: .5,
+      max: 0.5,
     },
     {
       id: 'corner',
@@ -93,18 +112,15 @@ Generates a tiled pattern of hexagons.
     super('pattern', 'Hex Grid', 'pattern_hexgrid');
   }
 
-  public readOutputValue(assembly: ShaderAssembly, node: GraphNode, out: string, uv: Expr): Expr {
-    if (assembly.start(node)) {
-      assembly.declareUniforms(this, node.id, this.params);
-      assembly.addCommon('steppers', 'hexgrid');
-      assembly.finish(node);
-    }
+  public getImports(node: GraphNode): Set<string> {
+    return IMPORTS;
+  }
 
-    const args: Expr[] = [
-      uv,
-      ...this.params.map(param => assembly.uniform(node, param.id)),
-    ];
-    return assembly.call('hexgrid', args, DataType.FLOAT);
+  public getCode(node: GraphNode): ExprNode {
+    return hexgrid(
+      refTexCoords(),
+      ...this.params.map(param => refUniform(param.id, param.type, node))
+    );
   }
 }
 

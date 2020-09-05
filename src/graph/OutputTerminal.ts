@@ -1,6 +1,6 @@
 import { AbstractTerminal } from './AbstractTerminal';
-import { ChangeType, GraphNode } from './GraphNode';
 import { Connection } from './Connection';
+import { GraphNode } from './GraphNode';
 import { Terminal } from './Terminal';
 import { observable } from 'mobx';
 
@@ -14,8 +14,6 @@ export class OutputTerminal extends AbstractTerminal {
 
   /** Delete a connection from the list of connections. */
   public disconnect(connection: Connection): boolean {
-    connection.source?.node.notifyChange(ChangeType.CONNECTION_CHANGED);
-    connection.dest?.node.notifyChange(ChangeType.CONNECTION_CHANGED);
     const index = this.connections.findIndex(conn => conn.dest === connection.dest);
     if (index >= 0) {
       this.connections.splice(index, 1);

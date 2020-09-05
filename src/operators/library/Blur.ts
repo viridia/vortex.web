@@ -1,14 +1,21 @@
 import { DataType, Input, Operator, Output, Parameter } from '..';
-import { Expr } from '../../render/Expr';
+import { ExprNode, defineFn, literal, refTexCoords, refUniform } from '../../render/ExprNode';
 import { GraphNode } from '../../graph';
-import { ShaderAssembly } from '../../render/ShaderAssembly';
+
+const IMPORTS = new Set(['blur']);
+
+export const blur = defineFn({
+  name: 'blur',
+  result: DataType.VEC4,
+  args: [DataType.IMAGE, DataType.FLOAT, DataType.VEC2],
+});
 
 class Blur extends Operator {
   public readonly inputs: Input[] = [
     {
       id: 'in',
       name: 'In',
-      type: DataType.RGBA,
+      type: DataType.VEC4,
       buffered: true,
     },
   ];
@@ -16,7 +23,7 @@ class Blur extends Operator {
     {
       id: 'out',
       name: 'Out',
-      type: DataType.RGBA,
+      type: DataType.VEC4,
     },
   ];
   public readonly params: Parameter[] = [
@@ -41,23 +48,19 @@ designed to scale with the size of the input, which requires a large amount of s
     super('filter', 'Blur', 'filter_blur');
   }
 
-  public readOutputValue(assembly: ShaderAssembly, node: GraphNode, out: string, uv: Expr): Expr {
-    if (assembly.start(node)) {
-      assembly.declareUniforms(this, node.id, this.params);
-      assembly.addBufferUniform(this, node.id, 'in');
-      assembly.addCommon('blur');
-      assembly.finish(node);
-    }
+  public getImports(node: GraphNode): Set<string> {
+    return IMPORTS;
+  }
 
-    return assembly.call(
-      'blur',
-      [
-        assembly.literal(this.uniformName(node.id, 'in'), DataType.IMAGE),
-        assembly.uniform(node, 'radius'),
-        uv,
-      ],
-      DataType.RGBA
-    );
+  public getCode(node: GraphNode): ExprNode {
+    if (!node.getInputTerminal('in').connection) {
+      return literal('vec4(0.0, 0.0, 0.0, 0.0)', DataType.VEC4);
+    }
+    return blur(
+        refUniform('in', DataType.IMAGE, node),
+        refUniform('radius', DataType.FLOAT, node),
+        refTexCoords()
+      );
   }
 }
 

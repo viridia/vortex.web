@@ -1,19 +1,30 @@
 import { DataType, Input, Operator, Output, Parameter } from '..';
-import { Expr } from '../../render/Expr';
+import { ExprNode, defineFn, refInput, refTexCoords, refUniform } from '../../render/ExprNode';
 import { GraphNode } from '../../graph';
-import { ShaderAssembly } from '../../render/ShaderAssembly';
+
+const IMPORTS = new Set(['gradient-color']);
+
+export const gradientColor = defineFn({
+  name: 'gradientColor',
+  result: DataType.VEC4,
+  args: [DataType.FLOAT, DataType.VEC4_ARRAY, DataType.FLOAT_ARRAY],
+});
 
 class Colorizer extends Operator {
-  public readonly inputs: Input[] = [{
-    id: 'in',
-    name: 'In',
-    type: DataType.FLOAT,
-  }];
-  public readonly outputs: Output[] = [{
-    id: 'out',
-    name: 'Out',
-    type: DataType.RGBA,
-  }];
+  public readonly inputs: Input[] = [
+    {
+      id: 'in',
+      name: 'In',
+      type: DataType.FLOAT,
+    },
+  ];
+  public readonly outputs: Output[] = [
+    {
+      id: 'out',
+      name: 'Out',
+      type: DataType.VEC4,
+    },
+  ];
   public readonly params: Parameter[] = [
     {
       id: 'color',
@@ -39,21 +50,16 @@ class Colorizer extends Operator {
     super('filter', 'Colorize', 'filter_colorize');
   }
 
-  public readOutputValue(assembly: ShaderAssembly, node: GraphNode, out: string, uv: Expr): Expr {
-    if (assembly.start(node)) {
-      assembly.declareUniforms(this, node.id, this.params);
-      assembly.addCommon('gradient-color');
-      assembly.finish(node);
-    }
+  public getImports(node: GraphNode): Set<string> {
+    return IMPORTS;
+  }
 
-    const inputA = assembly.readInputValue(node, 'in', uv);
-    const colorName = this.uniformName(node.id, 'color');
-    const args = [
-      inputA,
-      assembly.ident(`${colorName}_colors`, DataType.OTHER),
-      assembly.ident(`${colorName}_positions`, DataType.OTHER),
-    ];
-    return assembly.call('gradientColor', args, DataType.RGBA);
+  public getCode(node: GraphNode): ExprNode {
+    return gradientColor(
+      refInput('in', DataType.FLOAT, node, refTexCoords()),
+      refUniform('color_colors', DataType.VEC4_ARRAY, node),
+      refUniform('color_positions', DataType.FLOAT_ARRAY, node)
+    );
   }
 }
 

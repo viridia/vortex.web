@@ -1,13 +1,14 @@
 import { DataType, Operator, Output, Parameter } from '..';
-import { Expr } from '../../render/Expr';
 import { GraphNode } from '../../graph';
-import { ShaderAssembly } from '../../render/ShaderAssembly';
+
+const IMPORTS = new Set(['steppers', 'permute', 'pnoise', 'gradient-color', 'periodic-noise']);
 
 class Noise extends Operator {
+  public readonly deprecated = true;
   public readonly outputs: Output[] = [{
     id: 'out',
     name: 'Out',
-    type: DataType.RGBA,
+    type: DataType.VEC4,
   }];
 
   public readonly params: Parameter[] = [
@@ -97,34 +98,41 @@ Generates a periodic Perlin noise texture.
 * **Start Band** and **End Band** control the range of frequency bands. Each band represents
   one octave of noise.
 * **Persistance** determines the amplitude falloff from one frequencey band to the next.
+
+This generator is deprecated and will eventually be removed in favor of the simpler and
+more efficient Noise2.
 `;
 
   constructor() {
-    super('generator', 'Noise', 'pattern_noise');
+    super('generator', 'Noise (old)', 'pattern_noise');
   }
 
-  public readOutputValue(assembly: ShaderAssembly, node: GraphNode, out: string, uv: Expr): Expr {
-    if (assembly.start(node)) {
-      assembly.declareUniforms(this, node.id, this.params);
-      assembly.addCommon('steppers', 'permute', 'pnoise', 'gradient-color', 'periodic-noise');
-      assembly.finish(node);
-    }
-
-    const colorName = this.uniformName(node.id, 'color');
-    const args = [
-      uv,
-      assembly.uniform(node, 'scale_x'),
-      assembly.uniform(node, 'scale_y'),
-      assembly.uniform(node, 'offset_z'),
-      assembly.uniform(node, 'scale_value'),
-      assembly.uniform(node, 'start_band'),
-      assembly.uniform(node, 'end_band'),
-      assembly.uniform(node, 'persistence'),
-      assembly.ident(`${colorName}_colors`, DataType.OTHER),
-      assembly.ident(`${colorName}_positions`, DataType.OTHER),
-    ];
-    return assembly.call('periodicNoise', args, DataType.RGBA);
+  public getImports(node: GraphNode): Set<string> {
+    return IMPORTS;
   }
+
+  // public readOutputValue(assembly: ShaderAssembly, node: GraphNode, out: string, uv: Expr): Expr {
+  //   if (assembly.start(node)) {
+  //     assembly.declareUniforms(this, node.id, this.params);
+  //     assembly.addCommon('steppers', 'permute', 'pnoise', 'gradient-color', 'periodic-noise');
+  //     assembly.finish(node);
+  //   }
+
+  //   const colorName = this.uniformName(node.id, 'color');
+  //   const args = [
+  //     uv,
+  //     assembly.uniform(node, 'scale_x'),
+  //     assembly.uniform(node, 'scale_y'),
+  //     assembly.uniform(node, 'offset_z'),
+  //     assembly.uniform(node, 'scale_value'),
+  //     assembly.uniform(node, 'start_band'),
+  //     assembly.uniform(node, 'end_band'),
+  //     assembly.uniform(node, 'persistence'),
+  //     assembly.ident(`${colorName}_colors`, DataType.OTHER),
+  //     assembly.ident(`${colorName}_positions`, DataType.OTHER),
+  //   ];
+  //   return assembly.call('periodicNoise', args, DataType.VEC4);
+  // }
 }
 
 export default new Noise();

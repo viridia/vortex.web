@@ -1,9 +1,11 @@
 /** @jsx jsx */
+import copy from 'copy-to-clipboard';
 import styled from '@emotion/styled';
 import { Button } from '../controls/Button';
-import { FC } from 'react';
+import { FC, useCallback, useEffect, useState } from 'react';
 import { GraphNode } from '../graph';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from '../controls/Modal';
+import { autorun } from 'mobx';
 import { colors } from '../styles';
 import { jsx } from '@emotion/core';
 
@@ -45,6 +47,18 @@ interface Props {
 }
 
 export const ShaderSourceDialog: FC<Props> = ({ node, open, onClose }) => {
+  const [source, setSource] = useState('');
+
+  useEffect(() => {
+    return autorun(() => {
+      setSource(node.source);
+    });
+  }, [node]);
+
+  const onCopy = useCallback(() => {
+    copy(source);
+  }, [source]);
+
   return (
     <ShaderSourceElt
       className="shader-source"
@@ -60,20 +74,20 @@ export const ShaderSourceDialog: FC<Props> = ({ node, open, onClose }) => {
           <SourceDisplayTable className="source">
             <tbody>
               {open &&
-                node.operator
-                  .build(node)
-                  .split('\n')
-                  .map((line, i) => (
-                    <tr key={`${i}`}>
-                      <td className="index">{i + 1}</td>
-                      <td className="text">{line}</td>
-                    </tr>
-                  ))}
+                source.split('\n').map((line, i) => (
+                  <tr key={`${i}`}>
+                    <td className="index">{i + 1}</td>
+                    <td className="text">{line}{'\n'}</td>
+                  </tr>
+                ))}
             </tbody>
           </SourceDisplayTable>
         </SourceScroll>
       </ModalBody>
       <ModalFooter>
+        <Button className="copy" onClick={onCopy}>
+          Copy to Clipboard
+        </Button>
         <Button className="close" onClick={onClose}>
           Close
         </Button>

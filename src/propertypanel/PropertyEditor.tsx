@@ -70,7 +70,7 @@ export function PropertyEditor({ node, graph }: Props) {
     params.forEach(param => {
       if (param.type === DataType.FLOAT || param.type === DataType.INTEGER) {
         group.push(<ScalarProperty key={param.id} graph={graph} node={node} parameter={param} />);
-      } else if (param.type === DataType.RGBA) {
+      } else if (param.type === DataType.VEC4 && param.editor === 'color') {
         if (group.length > 0) {
           children.push(<PropertyGroup key={groupKey()}>{group}</PropertyGroup>);
         }

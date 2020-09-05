@@ -1,31 +1,47 @@
 import { DataType, Input, Operator, Output, Parameter } from '..';
-import { Expr } from '../../render/Expr';
+import {
+  ExprNode,
+  defineFn,
+  fork,
+  refInput,
+  refTexCoords,
+  refUniform,
+} from '../../render/ExprNode';
 import { GraphNode } from '../../graph';
-import { ShaderAssembly } from '../../render/ShaderAssembly';
+
+const IMPORTS = new Set(['mask']);
+
+export const mask = defineFn({
+  name: 'mask',
+  result: DataType.VEC4,
+  args: [DataType.VEC4, DataType.VEC4, DataType.VEC4, DataType.INTEGER],
+});
 
 class Mask extends Operator {
   public readonly inputs: Input[] = [
     {
       id: 'a',
       name: 'A',
-      type: DataType.RGBA,
+      type: DataType.VEC4,
     },
     {
       id: 'b',
       name: 'B',
-      type: DataType.RGBA,
+      type: DataType.VEC4,
     },
     {
       id: 'mask',
       name: 'Mask',
-      type: DataType.RGBA,
+      type: DataType.FLOAT,
     },
   ];
-  public readonly outputs: Output[] = [{
-    id: 'out',
-    name: 'Out',
-    type: DataType.RGBA,
-  }];
+  public readonly outputs: Output[] = [
+    {
+      id: 'out',
+      name: 'Out',
+      type: DataType.VEC4,
+    },
+  ];
   public readonly params: Parameter[] = [
     {
       id: 'invert',
@@ -46,18 +62,18 @@ Blends two source images based on a grayscale mask.
     super('filter', 'Mask', 'filter_mask');
   }
 
-  public readOutputValue(assembly: ShaderAssembly, node: GraphNode, out: string, uv: Expr): Expr {
-    if (assembly.start(node)) {
-      assembly.declareUniforms(this, node.id, this.params);
-      assembly.addCommon('mask');
-      assembly.finish(node);
-    }
+  public getImports(node: GraphNode): Set<string> {
+    return IMPORTS;
+  }
 
-    const inputA = assembly.readInputValue(node, 'a', uv);
-    const inputB = assembly.readInputValue(node, 'b', uv);
-    const mask = assembly.readInputValue(node, 'mask', uv);
-    const invert = assembly.uniform(node, 'invert');
-    return assembly.call('mask', [inputA, inputB, mask, invert], DataType.RGBA);
+  public getCode(node: GraphNode): ExprNode {
+    const tuv = fork(refTexCoords(), 'uv');
+    return mask(
+      refInput('a', DataType.VEC4, node, tuv),
+      refInput('b', DataType.VEC4, node, tuv),
+      refInput('mask', DataType.FLOAT, node, tuv),
+      refUniform('invert', DataType.INTEGER, node)
+    );
   }
 }
 

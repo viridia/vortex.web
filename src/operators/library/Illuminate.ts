@@ -1,26 +1,51 @@
 import { DataType, Input, Operator, Output, Parameter } from '..';
-import { Expr } from '../../render/Expr';
+import {
+  ExprNode,
+  defineFn,
+  fork,
+  refInput,
+  refTexCoords,
+  refUniform,
+} from '../../render/ExprNode';
 import { GraphNode } from '../../graph';
-import { ShaderAssembly } from '../../render/ShaderAssembly';
+
+const IMPORTS = new Set(['illuminate']);
+
+export const illuminate = defineFn({
+  name: 'illuminate',
+  result: DataType.VEC4,
+  args: [
+    DataType.VEC4,
+    DataType.VEC4,
+    DataType.FLOAT,
+    DataType.FLOAT,
+    DataType.FLOAT,
+    DataType.VEC4,
+    DataType.VEC4,
+    DataType.VEC4,
+  ],
+});
 
 class Illuminate extends Operator {
   public readonly inputs: Input[] = [
     {
       id: 'in',
       name: 'In',
-      type: DataType.RGBA,
+      type: DataType.VEC4,
     },
     {
       id: 'normal',
       name: 'Normal',
-      type: DataType.XYZW,
+      type: DataType.VEC4,
     },
   ];
-  public readonly outputs: Output[] = [{
-    id: 'out',
-    name: 'Out',
-    type: DataType.RGBA,
-  }];
+  public readonly outputs: Output[] = [
+    {
+      id: 'out',
+      name: 'Out',
+      type: DataType.VEC4,
+    },
+  ];
 
   public readonly params: Parameter[] = [
     {
@@ -56,21 +81,24 @@ class Illuminate extends Operator {
     {
       id: 'ambient',
       name: 'Ambient Color',
-      type: DataType.RGBA,
+      type: DataType.VEC4,
+      editor: 'color',
       noAlpha: true,
       default: [0.0, 0.0, 0.0, 1.0],
     },
     {
       id: 'diffuse',
       name: 'Diffuse Color',
-      type: DataType.RGBA,
+      type: DataType.VEC4,
+      editor: 'color',
       noAlpha: true,
       default: [0.5, 0.5, 0.5, 1.0],
     },
     {
       id: 'specular',
       name: 'Specular Color',
-      type: DataType.RGBA,
+      type: DataType.VEC4,
+      editor: 'color',
       noAlpha: true,
       default: [0.5, 0.5, 0.5, 1.0],
     },
@@ -89,23 +117,17 @@ Illuminate the input texture.
     super('filter', 'Illuminate', 'filter_illuminate');
   }
 
-  public readOutputValue(assembly: ShaderAssembly, node: GraphNode, out: string, uv: Expr): Expr {
-    if (assembly.start(node)) {
-      assembly.declareUniforms(this, node.id, this.params);
-      assembly.addCommon('illuminate');
-      assembly.finish(node);
-    }
+  public getImports(node: GraphNode): Set<string> {
+    return IMPORTS;
+  }
 
-    const input = assembly.readInputValue(node, 'in', uv);
-    const normal = assembly.readInputValue(node, 'normal', uv);
-
-    const args = [
-      input,
-      normal,
-      ...this.params.map(param => assembly.uniform(node, param.id)),
-    ];
-
-    return assembly.call('illuminate', args, DataType.RGBA);
+  public getCode(node: GraphNode): ExprNode {
+    const tuv = fork(refTexCoords(), 'uv');
+    return illuminate(
+      refInput('in', DataType.VEC4, node, tuv),
+      refInput('normal', DataType.VEC4, node, tuv),
+      ...this.params.map(param => refUniform(param.id, param.type, node))
+    );
   }
 }
 

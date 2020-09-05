@@ -1,25 +1,38 @@
 import { DataType, Input, Operator, Output, Parameter } from '..';
-import { Expr } from '../../render/Expr';
+import {
+  ExprNode,
+  add,
+  fork,
+  getAttr,
+  literal,
+  multiply,
+  refInput,
+  refTexCoords,
+  refUniform,
+  subtract,
+} from '../../render/ExprNode';
 import { GraphNode } from '../../graph';
-import { ShaderAssembly } from '../../render/ShaderAssembly';
 
 class Warp extends Operator {
   public readonly inputs: Input[] = [
     {
       id: 'in',
       name: 'In',
-      type: DataType.RGBA,
+      type: DataType.VEC4,
     },
     {
       id: 'duv',
       name: 'dUV',
-      type: DataType.XYZW,
-    }];
-  public readonly outputs: Output[] = [{
-    id: 'out',
-    name: 'Out',
-    type: DataType.RGBA,
-  }];
+      type: DataType.VEC4,
+    },
+  ];
+  public readonly outputs: Output[] = [
+    {
+      id: 'out',
+      name: 'Out',
+      type: DataType.VEC4,
+    },
+  ];
   public readonly params: Parameter[] = [
     {
       id: 'intensity',
@@ -33,30 +46,38 @@ class Warp extends Operator {
     },
   ];
 
-  public readonly description =
-    `Dispaces the input pixels based on the normal vector of the displacement input.`;
+  public readonly description = `Dispaces the input pixels based on the normal vector of the displacement input.`;
 
   constructor() {
     super('transform', 'Warp', 'transform_warp');
   }
 
-  public readOutputValue(assembly: ShaderAssembly, node: GraphNode, out: string, uv: Expr): Expr {
-    if (assembly.start(node)) {
-      assembly.declareUniforms(this, node.id, this.params);
-      assembly.finish(node);
-    }
-
-    const intensity = this.uniformName(node.id, 'intensity');
-    const iuv = `${this.localPrefix(node.id)}_uv`;
-    assembly.assign(iuv, 'vec2', uv);
-    const duv = `${this.localPrefix(node.id)}_duv`;
-    assembly.assign(duv, 'vec4', assembly.readInputValue(node, 'duv', uv));
-
-    return assembly.readInputValue(
-        node, 'in',
-        assembly.literal(
-            `${iuv} + (${duv}.xy - 0.5) * vec2(1.0, -1.0) * ${intensity}`,
-            DataType.UV));
+  public getCode(node: GraphNode): ExprNode {
+    const intensity = refUniform('intensity', DataType.FLOAT, node);
+    const iuv = fork(refTexCoords(), 'uv');
+    const duv = refInput('duv', DataType.VEC4, node, iuv);
+    return refInput(
+      'in',
+      DataType.VEC4,
+      node,
+      add(
+        iuv,
+        multiply(
+          multiply(
+            subtract(
+              getAttr(duv, 'xy', DataType.VEC2),
+              literal('0.5', DataType.VEC2),
+              DataType.VEC2
+            ),
+            literal('vec2(1.0, -1.0)', DataType.VEC2),
+            DataType.VEC2
+          ),
+          intensity,
+          DataType.VEC2
+        ),
+        DataType.VEC2
+      )
+    );
   }
 }
 

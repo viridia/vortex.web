@@ -1,7 +1,26 @@
 import { DataType, Operator, Output, Parameter } from '..';
-import { Expr } from '../../render/Expr';
+import { ExprNode, defineFn, refTexCoords, refUniform } from '../../render/ExprNode';
 import { GraphNode } from '../../graph';
-import { ShaderAssembly } from '../../render/ShaderAssembly';
+
+const IMPORTS = new Set(['steppers', 'bricks']);
+
+export const bricks = defineFn({
+  name: 'bricks',
+  result: DataType.FLOAT,
+  args: [
+    DataType.VEC2,
+    DataType.INTEGER,
+    DataType.INTEGER,
+    DataType.FLOAT,
+    DataType.FLOAT,
+    DataType.FLOAT,
+    DataType.FLOAT,
+    DataType.FLOAT,
+    DataType.FLOAT,
+    DataType.FLOAT,
+    DataType.INTEGER,
+  ],
+});
 
 class Bricks extends Operator {
   public readonly outputs: Output[] = [
@@ -112,20 +131,15 @@ Generates a pattern consisting of alternating rows of bricks.
     super('pattern', 'Bricks', 'pattern_bricks');
   }
 
-  public readOutputValue(
-    assembly: ShaderAssembly,
-    node: GraphNode,
-    output: string,
-    uv: Expr
-  ): Expr {
-    if (assembly.start(node)) {
-      assembly.declareUniforms(this, node.id, this.params);
-      assembly.addCommon('steppers', 'bricks');
-      assembly.finish(node);
-    }
+  public getImports(node: GraphNode): Set<string> {
+    return IMPORTS;
+  }
 
-    const args = [uv, ...this.params.map(param => assembly.uniform(node, param.id))];
-    return assembly.call('bricks', args, DataType.FLOAT);
+  public getCode(node: GraphNode): ExprNode {
+    return bricks(
+      refTexCoords(),
+      ...this.params.map(param => refUniform(param.id, param.type, node))
+    );
   }
 }
 

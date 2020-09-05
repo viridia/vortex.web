@@ -1,20 +1,31 @@
 import { DataType, Input, Operator, Output, Parameter } from '..';
-import { Expr } from '../../render/Expr';
+import { ExprNode, defineFn, literal, refTexCoords, refUniform } from '../../render/ExprNode';
 import { GraphNode } from '../../graph';
-import { ShaderAssembly } from '../../render/ShaderAssembly';
+
+const IMPORTS = new Set(['crossfade']);
+
+export const crossfade = defineFn({
+  name: 'crossfade',
+  result: DataType.VEC4,
+  args: [DataType.IMAGE, DataType.FLOAT, DataType.FLOAT, DataType.VEC2],
+});
 
 class CrossFade extends Operator {
-  public readonly inputs: Input[] = [{
-    id: 'in',
-    name: 'In',
-    type: DataType.RGBA,
-    buffered: true,
-  }];
-  public readonly outputs: Output[] = [{
-    id: 'out',
-    name: 'Out',
-    type: DataType.RGBA,
-  }];
+  public readonly inputs: Input[] = [
+    {
+      id: 'in',
+      name: 'In',
+      type: DataType.VEC4,
+      buffered: true,
+    },
+  ];
+  public readonly outputs: Output[] = [
+    {
+      id: 'out',
+      name: 'Out',
+      type: DataType.VEC4,
+    },
+  ];
   public readonly params: Parameter[] = [
     {
       id: 'x_overlap',
@@ -42,21 +53,20 @@ class CrossFade extends Operator {
     super('transform', 'Cross-Fade', 'transform_cross_fade');
   }
 
-  public readOutputValue(assembly: ShaderAssembly, node: GraphNode, out: string, uv: Expr): Expr {
-    if (assembly.start(node)) {
-      assembly.declareUniforms(this, node.id, this.params);
-      assembly.addBufferUniform(this, node.id, 'in');
-      assembly.addCommon('crossfade');
-      assembly.finish(node);
-    }
+  public getImports(node: GraphNode): Set<string> {
+    return IMPORTS;
+  }
 
-    return assembly.call(
-      'crossfade', [
-        assembly.literal(this.uniformName(node.id, 'in'), DataType.IMAGE),
-        assembly.uniform(node, 'x_overlap'),
-        assembly.uniform(node, 'y_overlap'),
-        uv,
-      ], DataType.RGBA);
+  public getCode(node: GraphNode): ExprNode {
+    if (!node.getInputTerminal('in').connection) {
+      return literal('vec4(0.0, 0.0, 0.0, 0.0)', DataType.VEC4);
+    }
+    return crossfade(
+      refUniform('in', DataType.IMAGE, node),
+      refUniform('x_overlap', DataType.FLOAT, node),
+      refUniform('y_overlap', DataType.FLOAT, node),
+      refTexCoords()
+    );
   }
 }
 

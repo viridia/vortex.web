@@ -1,11 +1,12 @@
 import { DataType } from './DataType';
-import { Expr } from '../render/Expr';
+import { ExprNode, literal } from '../render/ExprNode';
 import { GraphNode } from '../graph';
 import { Input } from './Input';
 import { Output } from './Output';
 import { Parameter } from './Parameter';
 import { Renderer } from '../render/Renderer';
-import { ShaderAssembly } from '../render/ShaderAssembly';
+
+const EMPTY_SET = new Set<string>();
 
 /** Defines a type of node. */
 export abstract class Operator {
@@ -16,6 +17,7 @@ export abstract class Operator {
   public readonly outputs: Output[] = [];
   public readonly params: Parameter[] = [];
   public abstract readonly description?: string;
+  public readonly deprecated: boolean = false;
 
   constructor(group: string, name: string, id: string) {
     this.group = group;
@@ -23,29 +25,14 @@ export abstract class Operator {
     this.id = id;
   }
 
-  // Render a node with the specified renderer.
-  public renderNode(renderer: Renderer, node: GraphNode): void {
-    if (!node.glResources?.program) {
-      renderer.compileShaderProgram(this.build(node), node);
-    }
+  /** Retrieve the set of imports needed for a given node. */
+  public getImports(node: GraphNode): Set<string> {
+    return EMPTY_SET;
+  }
 
-    const program: WebGLProgram = node.glResources?.program!;
-    if (program) {
-      renderer.executeShaderProgram(node, gl => {
-        // Set the uniforms for this node and all upstream nodes.
-        renderer.setShaderUniforms(node, program);
-        if (this.inputs.length > 0) {
-          for (const input of this.inputs) {
-            if (input.buffered) {
-              renderer.setShaderInputBufferUniforms(node, program, input.id);
-            }
-          }
-          node.visitUpstreamNodes((upstream, connection) => {
-            renderer.setShaderUniforms(upstream, program);
-          });
-        }
-      });
-    }
+  /** Return the expression for this node. */
+  public getCode(node: GraphNode): ExprNode {
+    return literal('vec4(0.0, 0.0, 0.0, 0.0)', DataType.VEC4);
   }
 
   // Release any GL resources we were holding on to.
@@ -99,33 +86,6 @@ export abstract class Operator {
       }
     }
     return result;
-  }
-
-  /** Returns an expression object representing the output of this node. */
-  public abstract readOutputValue(
-    assembly: ShaderAssembly,
-    node: GraphNode,
-    output: string,
-    uv: Expr
-  ): Expr;
-
-  /** Build the shader for this operator and its current input connections.
-      The shader will include the source for this operator and any operators it depends on.
-      If an input is buffered, then it will not include the code to generate that input,
-      but rather generate a reference to a texture sampler which contains the buffered result. */
-  public build(node: GraphNode): string {
-    if (this.outputs.length > 0) {
-      const assembly = new ShaderAssembly();
-      const uv = assembly.literal('vTextureCoord', DataType.UV);
-      assembly.main(this.readOutputValue(assembly, node, this.outputs[0].id, uv));
-      return assembly.toString();
-    }
-    throw Error('Node with no output');
-  }
-
-  public localPrefix(nodeId: number) {
-    const opName = this.id.slice(0, 1).toUpperCase() + this.id.slice(1);
-    return `t${opName}${nodeId}`;
   }
 
   public uniformPrefix(nodeId: number) {

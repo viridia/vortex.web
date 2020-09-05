@@ -1,19 +1,31 @@
 import { DataType, Input, Operator, Output, Parameter } from '..';
-import { Expr } from '../../render/Expr';
+import {
+  ExprNode,
+  fork,
+  getAttr,
+  multiply,
+  refInput,
+  refTexCoords,
+  refUniform,
+} from '../../render/ExprNode';
 import { GraphNode } from '../../graph';
-import { ShaderAssembly } from '../../render/ShaderAssembly';
+import { fract, vec2 } from '../../render/glIntrinsics';
 
 class Repeat extends Operator {
-  public readonly inputs: Input[] = [{
-    id: 'in',
-    name: 'In',
-    type: DataType.RGBA,
-  }];
-  public readonly outputs: Output[] = [{
-    id: 'out',
-    name: 'Out',
-    type: DataType.RGBA,
-  }];
+  public readonly inputs: Input[] = [
+    {
+      id: 'in',
+      name: 'In',
+      type: DataType.VEC4,
+    },
+  ];
+  public readonly outputs: Output[] = [
+    {
+      id: 'out',
+      name: 'Out',
+      type: DataType.VEC4,
+    },
+  ];
   public readonly params: Parameter[] = [
     {
       id: 'count_x',
@@ -39,21 +51,15 @@ class Repeat extends Operator {
     super('transform', 'Repeat', 'transform_repeat');
   }
 
-  public readOutputValue(assembly: ShaderAssembly, node: GraphNode, out: string, uv: Expr): Expr {
-    if (assembly.start(node)) {
-      assembly.declareUniforms(this, node.id, this.params);
-      assembly.finish(node);
-    }
-
-    const countX = this.uniformName(node.id, 'count_x');
-    const countY = this.uniformName(node.id, 'count_y');
-    const tuv = `${this.localPrefix(node.id)}_uv`;
-    assembly.assign(tuv, 'vec2', uv);
-    return assembly.readInputValue(
-        node, 'in',
-        assembly.literal(
-            `vec2(fract(${tuv}.x * float(${countX})), fract(${tuv}.y * float(${countY})))`,
-            DataType.UV));
+  public getCode(node: GraphNode): ExprNode {
+    const tuv = fork(refTexCoords(), 'uv');
+    const countX = refUniform('count_x', DataType.INTEGER, node);
+    const countY = refUniform('count_y', DataType.INTEGER, node);
+    const ruv = vec2(
+      fract(multiply(getAttr(tuv, 'x', DataType.FLOAT), countX, DataType.FLOAT)),
+      fract(multiply(getAttr(tuv, 'y', DataType.FLOAT), countY, DataType.FLOAT))
+    );
+    return refInput('in', DataType.FLOAT, node, ruv);
   }
 }
 

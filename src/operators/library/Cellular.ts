@@ -1,14 +1,29 @@
 import { DataType, Operator, Output, Parameter } from '..';
-import { Expr } from '../../render/Expr';
+import { ExprNode, defineFn, refTexCoords, refUniform } from '../../render/ExprNode';
 import { GraphNode } from '../../graph';
-import { ShaderAssembly } from '../../render/ShaderAssembly';
+
+const IMPORTS = new Set(['permute', 'pworley', 'cellular']);
+
+export const cellular = defineFn({
+  name: 'cellularNoise',
+  result: DataType.FLOAT,
+  args: [
+    DataType.VEC2,
+    DataType.INTEGER,
+    DataType.INTEGER,
+    DataType.FLOAT,
+    DataType.FLOAT,
+    DataType.FLOAT,
+    DataType.INTEGER,
+  ],
+});
 
 class Cellular extends Operator {
   public readonly outputs: Output[] = [
     {
       id: 'out',
       name: 'Out',
-      type: DataType.RGBA,
+      type: DataType.FLOAT,
     },
   ];
 
@@ -69,22 +84,6 @@ class Cellular extends Operator {
       ],
       default: 0,
     },
-    {
-      id: 'color',
-      name: 'Color',
-      type: DataType.RGBA_GRADIENT,
-      max: 32,
-      default: [
-        {
-          value: [0, 0, 0, 1],
-          position: 0,
-        },
-        {
-          value: [1, 1, 1, 1],
-          position: 1,
-        },
-      ],
-    },
   ];
   public readonly description = `
 Generates a periodic Worley noise texture.
@@ -100,29 +99,18 @@ Generates a periodic Worley noise texture.
 `;
 
   constructor() {
-    super('generator', 'Cellular', 'generator_cellular');
+    super('generator', 'Cellular', 'gen_cellular');
   }
 
-  public readOutputValue(assembly: ShaderAssembly, node: GraphNode, out: string, uv: Expr): Expr {
-    if (assembly.start(node)) {
-      assembly.declareUniforms(this, node.id, this.params);
-      assembly.addCommon('permute', 'pworley', 'gradient-color', 'cellular');
-      assembly.finish(node);
-    }
+  public getImports(node: GraphNode): Set<string> {
+    return IMPORTS;
+  }
 
-    const colorName = this.uniformName(node.id, 'color');
-    const args = [
-      uv,
-      assembly.uniform(node, 'scale_x'),
-      assembly.uniform(node, 'scale_y'),
-      assembly.uniform(node, 'offset_z'),
-      assembly.uniform(node, 'jitter'),
-      assembly.uniform(node, 'scale_value'),
-      assembly.uniform(node, 'func'),
-      assembly.ident(`${colorName}_colors`, DataType.OTHER),
-      assembly.ident(`${colorName}_positions`, DataType.OTHER),
-    ];
-    return assembly.call('cellularNoise', args, DataType.RGBA);
+  public getCode(node: GraphNode): ExprNode {
+    return cellular(
+      refTexCoords(),
+      ...this.params.map(param => refUniform(param.id, param.type, node))
+    );
   }
 }
 

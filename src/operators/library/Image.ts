@@ -1,14 +1,21 @@
 import { DataType, Operator, Output, Parameter } from '..';
-import { Expr } from '../../render/Expr';
+import { ExprNode, defineFn, literal, refTexCoords, refUniform } from '../../render/ExprNode';
 import { GraphNode } from '../../graph';
-import { ShaderAssembly } from '../../render/ShaderAssembly';
+
+export const texture = defineFn({
+  name: 'texture',
+  result: DataType.VEC4,
+  args: [DataType.IMAGE, DataType.VEC2],
+});
 
 class Image extends Operator {
-  public readonly outputs: Output[] = [{
-    id: 'out',
-    name: 'Out',
-    type: DataType.RGBA,
-  }];
+  public readonly outputs: Output[] = [
+    {
+      id: 'out',
+      name: 'Out',
+      type: DataType.VEC4,
+    },
+  ];
   public readonly params: Parameter[] = [
     {
       id: 'image',
@@ -22,18 +29,20 @@ class Image extends Operator {
     super('pattern', 'Image', 'pattern_image');
   }
 
-  public readOutputValue(assembly: ShaderAssembly, node: GraphNode, out: string, uv: Expr): Expr {
-    if (assembly.start(node)) {
-      assembly.declareUniforms(this, node.id, this.params);
-      assembly.finish(node);
+  public getCode(node: GraphNode): ExprNode {
+    if (!node.getInputTerminal('in').connection) {
+      return literal('vec4(0.0, 0.0, 0.0, 0.0)', DataType.VEC4);
     }
-
-    return assembly.call(
-      'texture', [
-        assembly.uniform(node, 'image'),
-        uv,
-      ], DataType.RGBA);
+    return texture(refUniform('image', DataType.IMAGE, node), refTexCoords());
   }
+
+  // public readOutputValue(assembly: ShaderAssembly, node: GraphNode, out: string, uv: Expr): Expr {
+  //   return assembly.call(
+  //     'texture', [
+  //       assembly.uniform(node, 'image'),
+  //       uv,
+  //     ], DataType.VEC4);
+  // }
 }
 
 export default new Image();

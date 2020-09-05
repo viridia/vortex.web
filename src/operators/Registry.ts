@@ -28,7 +28,7 @@ export class Registry {
   }
 
   public get list(): Operator[] {
-    return Array.from(this.operators.values());
+    return Array.from(this.operators.values()).filter(op => !op.deprecated);
   }
 }
 

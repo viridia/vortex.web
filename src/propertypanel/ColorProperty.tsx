@@ -1,6 +1,6 @@
 import React, { FC, useCallback, useEffect, useRef } from 'react';
-import { ChangeType, Graph, GraphNode } from '../graph';
 import { ColorPicker } from '../controls/ColorPicker';
+import { Graph, GraphNode } from '../graph';
 import { Parameter } from '../operators';
 import { RGBAColor } from '../render/colors';
 import { observer } from 'mobx-react';
@@ -19,7 +19,6 @@ export const ColorProperty: FC<Props> = observer(({ parameter, node, graph }) =>
     (value: RGBAColor) => {
       runInAction(() => {
         node.paramValues.set(parameter.id, value);
-        node.notifyChange(ChangeType.PARAM_VALUE_CHANGED);
         graph.modified = true;
       });
     },

@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
-import { ChangeType, Graph, GraphNode } from '../graph';
 import { ComboSlider } from '../controls/ComboSlider';
 import { DataType, Parameter } from '../operators';
+import { Graph, GraphNode } from '../graph';
 import { action } from 'mobx';
 import { observer } from 'mobx-react';
 
@@ -63,7 +63,6 @@ export class ScalarProperty extends Component<Props> {
     } else {
       node.paramValues.set(parameter.id, value);
     }
-    node.notifyChange(ChangeType.PARAM_VALUE_CHANGED);
     graph.modified = true;
   }
 }

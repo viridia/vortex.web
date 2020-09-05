@@ -1,7 +1,14 @@
 import { DataType, Input, Operator, Output, Parameter } from '..';
-import { Expr } from '../../render/Expr';
+import { ExprNode, defineFn, refInput, refTexCoords, refUniform } from '../../render/ExprNode';
 import { GraphNode } from '../../graph';
-import { ShaderAssembly } from '../../render/ShaderAssembly';
+
+const IMPORTS = new Set(['modulus']);
+
+export const modulus = defineFn({
+  name: 'modulus',
+  result: DataType.FLOAT,
+  args: [DataType.FLOAT, DataType.INTEGER, DataType.FLOAT, DataType.FLOAT],
+});
 
 class Modulus extends Operator {
   public readonly inputs: Input[] = [
@@ -11,11 +18,13 @@ class Modulus extends Operator {
       type: DataType.FLOAT,
     },
   ];
-  public readonly outputs: Output[] = [{
-    id: 'out',
-    name: 'Out',
-    type: DataType.RGBA,
-  }];
+  public readonly outputs: Output[] = [
+    {
+      id: 'out',
+      name: 'Out',
+      type: DataType.VEC4,
+    },
+  ];
   public readonly params: Parameter[] = [
     {
       id: 'frequency',
@@ -32,7 +41,7 @@ class Modulus extends Operator {
       min: 0,
       max: 1,
       precision: 2,
-      increment: .01,
+      increment: 0.01,
       default: 0,
     },
     {
@@ -42,24 +51,8 @@ class Modulus extends Operator {
       min: 0,
       max: 1,
       precision: 2,
-      increment: .01,
+      increment: 0.01,
       default: 1,
-    },
-    {
-      id: 'color',
-      name: 'Color',
-      type: DataType.RGBA_GRADIENT,
-      max: 32,
-      default: [
-        {
-          value: [0, 0, 0, 1],
-          position: 0,
-        },
-        {
-          value: [1, 1, 1, 1],
-          position: 1,
-        },
-      ],
     },
   ];
   public readonly description = `
@@ -69,29 +62,21 @@ converted into a sequence of sawtooth waves.
 * **offset** - amount to be added to the value before applying the mod operator.
 * **phase** - used to control where the 'peak' of the output is within the interval. Setting
   the value to 1 produces a sawtooth wave, while setting it to .5 will produce a triangle wave.
-* **color** - maps the output value through a gradient.
 `;
 
   constructor() {
     super('filter', 'Modulus', 'filter_modulus');
   }
 
-  public readOutputValue(assembly: ShaderAssembly, node: GraphNode, out: string, uv: Expr): Expr {
-    if (assembly.start(node)) {
-      assembly.declareUniforms(this, node.id, this.params);
-      assembly.addCommon('gradient-color', 'modulus');
-      assembly.finish(node);
-    }
+  public getImports(node: GraphNode): Set<string> {
+    return IMPORTS;
+  }
 
-    const colorName = this.uniformName(node.id, 'color');
-    return assembly.call('modulus', [
-      assembly.readInputValue(node, 'input', uv),
-      assembly.uniform(node, 'frequency'),
-      assembly.uniform(node, 'offset'),
-      assembly.uniform(node, 'phase'),
-      assembly.ident(`${colorName}_colors`, DataType.OTHER),
-      assembly.ident(`${colorName}_positions`, DataType.OTHER),
-    ], DataType.RGBA);
+  public getCode(node: GraphNode): ExprNode {
+    return modulus(
+      refInput('input', DataType.FLOAT, node, refTexCoords()),
+      ...this.params.map(param => refUniform(param.id, param.type, node))
+    );
   }
 }
 

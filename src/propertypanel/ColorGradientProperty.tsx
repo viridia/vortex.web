@@ -1,6 +1,6 @@
 import React, { FC, useCallback, useEffect } from 'react';
-import { ChangeType, Graph, GraphNode } from '../graph';
 import { ColorGradientEditor } from '../controls/ColorGradientEditor';
+import { Graph, GraphNode } from '../graph';
 import { Parameter } from '../operators';
 import { observer } from 'mobx-react';
 import { runInAction } from 'mobx';
@@ -20,10 +20,9 @@ export const ColorGradientProperty: FC<Props> = observer(({ parameter, graph, no
 
   const onChange = useCallback(() => {
     runInAction(() => {
-      node.notifyChange(ChangeType.PARAM_VALUE_CHANGED);
       graph.modified = true;
     });
-  }, [graph, node]);
+  }, [graph]);
 
   const value = node.paramValues.get(parameter.id);
   return value ? (

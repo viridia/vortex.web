@@ -49,3 +49,15 @@
     * feMorphology
     * feOffset
     * feTurbulence
+
+# Vortex V2 - more efficient shader code generation.
+
+* Image uploading
+* Optimize blend
+* Better line breaking
+* Need a better method for writing shader expressions than manual Expression trees.
+* Show terminal data types
+* Ramp operator
+* Constant Float operator
+* Don't need ShaderCode
+* Rename Exprs

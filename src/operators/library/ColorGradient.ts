@@ -1,14 +1,23 @@
 import { DataType, Operator, Output, Parameter } from '..';
-import { Expr } from '../../render/Expr';
+import { ExprNode, defineFn, refTexCoords, refUniform } from '../../render/ExprNode';
 import { GraphNode } from '../../graph';
-import { ShaderAssembly } from '../../render/ShaderAssembly';
 
-class Gradient extends Operator {
-  public readonly outputs: Output[] = [{
-    id: 'out',
-    name: 'Out',
-    type: DataType.RGBA,
-  }];
+const IMPORTS = new Set(['gradient-color', 'gradient']);
+
+export const colorGradient = defineFn({
+  name: 'gradient',
+  result: DataType.VEC4,
+  args: [DataType.VEC2, DataType.INTEGER, DataType.VEC4_ARRAY, DataType.FLOAT_ARRAY],
+});
+
+class ColorGradient extends Operator {
+  public readonly outputs: Output[] = [
+    {
+      id: 'out',
+      name: 'Out',
+      type: DataType.VEC4,
+    },
+  ];
   public readonly params: Parameter[] = [
     {
       id: 'type',
@@ -46,25 +55,21 @@ Generates a simple gradient.
 `;
 
   constructor() {
-    super('generator', 'Gradient', 'generator_gradient');
+    super('generator', 'Color Gradient', 'generator_gradient');
   }
 
-  public readOutputValue(assembly: ShaderAssembly, node: GraphNode, out: string, uv: Expr): Expr {
-    if (assembly.start(node)) {
-      assembly.declareUniforms(this, node.id, this.params);
-      assembly.addCommon('gradient-color', 'gradient');
-      assembly.finish(node);
-    }
+  public getImports(node: GraphNode): Set<string> {
+    return IMPORTS;
+  }
 
-    const colorName = this.uniformName(node.id, 'color');
-    const args: Expr[] = [
-      uv,
-      assembly.uniform(node, 'type'),
-      assembly.ident(`${colorName}_colors`, DataType.OTHER),
-      assembly.ident(`${colorName}_positions`, DataType.OTHER),
-    ];
-    return assembly.call('gradient', args, DataType.RGBA);
+  public getCode(node: GraphNode): ExprNode {
+    return colorGradient(
+      refTexCoords(),
+      refUniform('type', DataType.INTEGER, node),
+      refUniform('color_colors', DataType.VEC4_ARRAY, node),
+      refUniform('color_positions', DataType.FLOAT_ARRAY, node)
+    );
   }
 }
 
-export default new Gradient();
+export default new ColorGradient();

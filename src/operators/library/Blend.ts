@@ -1,26 +1,40 @@
 import { DataType, Input, Operator, Output, Parameter } from '..';
-import { Expr } from '../../render/Expr';
+import {
+  ExprNode,
+  defineFn,
+  fork,
+  refInput,
+  refTexCoords,
+  refUniform,
+} from '../../render/ExprNode';
 import { GraphNode } from '../../graph';
-import { ShaderAssembly } from '../../render/ShaderAssembly';
+
+const IMPORTS = new Set(['blend']);
+
+export const blend = defineFn({
+  name: 'blend',
+  result: DataType.VEC4,
+  args: [DataType.VEC4, DataType.VEC4, DataType.INTEGER, DataType.FLOAT, DataType.INTEGER],
+});
 
 class Blend extends Operator {
   public readonly inputs: Input[] = [
     {
       id: 'a',
       name: 'A',
-      type: DataType.RGBA,
+      type: DataType.VEC4,
     },
     {
       id: 'b',
       name: 'B',
-      type: DataType.RGBA,
+      type: DataType.VEC4,
     },
   ];
   public readonly outputs: Output[] = [
     {
       id: 'out',
       name: 'Out',
-      type: DataType.RGBA,
+      type: DataType.VEC4,
     },
   ];
   public readonly params: Parameter[] = [
@@ -73,19 +87,19 @@ Blends two source images, similar to layer operations in GIMP or PhotoShop.
     super('filter', 'Blend', 'filter_blend');
   }
 
-  public readOutputValue(assembly: ShaderAssembly, node: GraphNode, out: string, uv: Expr): Expr {
-    if (assembly.start(node)) {
-      assembly.declareUniforms(this, node.id, this.params);
-      assembly.addCommon('blend');
-      assembly.finish(node);
-    }
+  public getImports(node: GraphNode): Set<string> {
+    return IMPORTS;
+  }
 
-    const inputA = assembly.readInputValue(node, 'a', uv);
-    const inputB = assembly.readInputValue(node, 'b', uv);
-    const op = assembly.uniform(node, 'op');
-    const strength = assembly.uniform(node, 'strength');
-    const norm = assembly.uniform(node, 'norm');
-    return assembly.call('blend', [inputA, inputB, op, strength, norm], DataType.RGBA);
+  public getCode(node: GraphNode): ExprNode {
+    const tuv = fork(refTexCoords(), 'uv');
+    return blend(
+        refInput('a', DataType.VEC4, node, tuv),
+        refInput('b', DataType.VEC4, node, tuv),
+        refUniform('op', DataType.INTEGER, node),
+        refUniform('strength', DataType.FLOAT, node),
+        refUniform('norm', DataType.INTEGER, node)
+      );
   }
 }
 

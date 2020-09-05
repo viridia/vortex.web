@@ -1,20 +1,16 @@
 import { Connection } from './Connection';
-import { DataType, Operator } from '../operators';
+import { DataType, Operator, Parameter } from '../operators';
+import { ExprNode } from '../render/ExprNode';
 import { GLResources } from '../render/GLResources';
 import { InputTerminal } from './InputTerminal';
+import { ObservableMap, computed, observable } from 'mobx';
 import { OutputTerminal } from './OutputTerminal';
 import { Renderer } from '../render/Renderer';
+import { ShaderGenerator } from '../render/ShaderGenerator';
 import { Terminal } from './Terminal';
-import { observable } from 'mobx';
-
-export enum ChangeType {
-  NONE,
-  PARAM_VALUE_CHANGED,
-  CONNECTION_CHANGED,
-  NODE_DELETED,
-}
-
-type Watcher = (change: ChangeType) => void;
+import { equalSet } from '../lib/comparators';
+import { glType } from '../operators/DataType';
+import { union } from '../lib/functional';
 
 /** A node in the graph. */
 export class GraphNode {
@@ -27,7 +23,7 @@ export class GraphNode {
   public outputs: OutputTerminal[] = [];
 
   // Node parameters
-  @observable public paramValues: Map<string, any> = new Map();
+  public paramValues = new ObservableMap<string, any>();
 
   // Node selection state
   @observable public selected: boolean = false;
@@ -37,10 +33,9 @@ export class GraphNode {
 
   // GL resources allocated by the operator for this node.
   public glResources: GLResources | undefined;
+  public prevSource: string = '';
 
-  // List of entities that need to be notified when any of the node properties change.
-  private watchers: Set<Watcher> = new Set();
-  private changeInProgress: ChangeType = ChangeType.NONE;
+  private generator: ShaderGenerator;
 
   constructor(
     // Defines what this node does.
@@ -65,6 +60,8 @@ export class GraphNode {
         y += spacing;
       });
     }
+
+    this.generator = new ShaderGenerator(this);
   }
 
   // The human-readable name of this node.
@@ -72,8 +69,9 @@ export class GraphNode {
     return this.operator.name;
   }
 
-  public destroy(renderer: Renderer) {
+  public dispose(renderer: Renderer) {
     this.operator.cleanup(renderer, this);
+    this.generator.dispose();
   }
 
   public ensureGLResources(): GLResources {
@@ -93,6 +91,30 @@ export class GraphNode {
 
   public findTerminal(id: string): Terminal | undefined {
     return this.findInputTerminal(id) || this.findOutputTerminal(id);
+  }
+
+  public getInputTerminal(id: string): InputTerminal {
+    const terminal = this.findInputTerminal(id);
+    if (!terminal) {
+      throw Error(`Terminal ${this.operator.id}.${id} not found`);
+    }
+    return terminal;
+  }
+
+  public getOutputTerminal(id: string): OutputTerminal {
+    const terminal = this.findOutputTerminal(id);
+    if (!terminal) {
+      throw Error(`Terminal ${this.operator.id}.${id} not found`);
+    }
+    return terminal;
+  }
+
+  public getTerminal(id: string): Terminal | undefined {
+    const terminal = this.findTerminal(id);
+    if (!terminal) {
+      throw Error(`Terminal ${this.operator.id}.${id} not found`);
+    }
+    return terminal;
   }
 
   /** Visit all nodes which transitively feed into this node's inputs.
@@ -142,38 +164,10 @@ export class GraphNode {
     visit(this);
   }
 
-  public notifyChange(change: ChangeType) {
-    if (this.changeInProgress !== change) {
-      this.changeInProgress = change;
-      if (change !== ChangeType.NODE_DELETED) {
-        this.visitDownstreamNodes((node, termId) => {
-          node.notifyChange(change);
-        });
-      }
-      window.requestAnimationFrame(() => {
-        if (this.changeInProgress !== ChangeType.NONE) {
-          this.watchers.forEach(watcher => {
-            watcher(this.changeInProgress);
-          });
-          this.changeInProgress = ChangeType.NONE;
-        }
-      });
-    }
-  }
-
   public setDeleted() {
     if (!this.deleted) {
       this.deleted = true;
-      this.notifyChange(ChangeType.NODE_DELETED);
     }
-  }
-
-  public watch(watcher: Watcher) {
-    this.watchers.add(watcher);
-  }
-
-  public unwatch(watcher: Watcher) {
-    this.watchers.delete(watcher);
   }
 
   public toJs(): any {
@@ -201,7 +195,8 @@ export class GraphNode {
         if (imageUrl) {
           renderer.loadTexture(imageUrl, texture => {
             this.ensureGLResources().textures.set(param.id, texture);
-            this.notifyChange(ChangeType.PARAM_VALUE_CHANGED);
+            // TODO: We need to make this an observable.
+            // this.notifyChange(ChangeType.PARAM_VALUE_CHANGED);
           });
         }
       }
@@ -216,5 +211,71 @@ export class GraphNode {
       }
     }
     throw Error(`Texture not found: ${id}`);
+  }
+
+  @computed({ requiresReaction: true })
+  public get source(): string {
+    return this.generator.source;
+  }
+
+  /** Return an expression graph represneting this node's output. */
+  @computed
+  public get outputCode(): ExprNode {
+    return this.operator.getCode(this);
+  }
+
+  // Return the (observable) set of imports needed to compile the code for this node
+  // and its dependencies.
+  @computed<Set<string>>({ equals: equalSet, requiresReaction: true })
+  public get imports(): Set<string> {
+    let result = this.operatorImports;
+    for (const input of this.inputs) {
+      const sourceNode = input.connection?.source.node;
+      if (sourceNode) {
+        result = union(result, sourceNode.imports);
+      }
+    }
+    return result;
+  }
+
+  @computed<Set<string>>({ equals: equalSet, requiresReaction: true })
+  public get operatorImports(): Set<string> {
+    return this.operator.getImports(this);
+  }
+
+  @computed({ requiresReaction: true })
+  public get uniforms(): string[] {
+    const result: string[] = [];
+    // Buffered inputs also have to be declared as uniforms.
+    this.operator.inputs.forEach(input => {
+      if (input.buffered) {
+        const uniformName = this.operator.uniformName(this.id, input.id);
+        result.push(`uniform sampler2D ${uniformName};`);
+      }
+    })
+    const declareUniforms = (params: Parameter[]): void => {
+      params.forEach(param => {
+        if (param.type === DataType.GROUP) {
+          declareUniforms(param.children!);
+        } else {
+          const uniformName = this.operator.uniformName(this.id, param);
+          if (param.type === DataType.RGBA_GRADIENT) {
+            result.push(`uniform vec4 ${uniformName}_colors[32];`);
+            result.push(`uniform float ${uniformName}_positions[32];`);
+          } else {
+            result.push(`uniform ${glType(param.type)} ${uniformName};`);
+          }
+        }
+      });
+    }
+    declareUniforms(this.operator.paramList);
+    if (result.length > 0) {
+      return [
+        `// Uniforms for ${this.operator.id}${this.id}`,
+        ...result,
+        '',
+      ]
+    }
+    return result;
   }
 }
