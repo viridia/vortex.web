@@ -69,8 +69,10 @@ export class GraphNode {
     return this.operator.name;
   }
 
+  // Release any GL resources we were holding on to.
   public dispose(renderer: Renderer) {
-    this.operator.cleanup(renderer, this);
+    renderer.deleteShaderResources(this.glResources);
+    renderer.deleteTextureResources(this.glResources);
     this.generator.dispose();
   }
 

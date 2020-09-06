@@ -59,5 +59,8 @@
 * Show terminal data types
 * Ramp operator
 * Constant Float operator
-* Don't need ShaderCode
+* Scroll-dragging
 * Rename Exprs
+* Patterns:
+  * Square grid
+  * Tartan

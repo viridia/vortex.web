@@ -11,6 +11,9 @@ import { reaction, runInAction } from 'mobx';
 const ImagePropertyPanel = styled.section`
   display: flex;
   flex-direction: column;
+  margin-bottom: 4px;
+  margin-top: 4px;
+  flex-shrink: 0;
 `;
 
 const UploadButton = styled(Button)`

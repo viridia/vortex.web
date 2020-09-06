@@ -6,10 +6,10 @@ import styled from '@emotion/styled';
 import { Button } from '../controls/Button';
 import { ButtonGroup } from '../controls/ButtonGroup';
 import { Component } from 'react';
+import { ExportImageModal } from '../export/ExportImageModal';
 import { GraphNode } from '../graph';
-import { ShaderSourceDialog } from './ShaderSourceDialog'
+import { ShaderSourceDialog } from './ShaderSourceDialog';
 import { observer } from 'mobx-react';
-// import ExportImageModal from './export/ExportImageModal';
 
 // import './NodeActions.scss';
 
@@ -54,7 +54,6 @@ export class NodeActions extends Component<Props, State> {
   public render() {
     const { node, locked } = this.props;
     const { showSource, showExport, repeat } = this.state;
-    false && console.log(node, showSource, showExport );
     return (
       <NodeActionsElt className="node-actions">
         <ButtonGroup className="Button-group">
@@ -86,7 +85,7 @@ export class NodeActions extends Component<Props, State> {
         <div className="spacer" />
         <Button onClick={this.onClickShowExport}>Export&hellip;</Button>
         <ShaderSourceDialog open={showSource} onClose={this.onHideSource} node={node} />
-        {/* <ExportImageModal node={node} show={showExport} onHide={this.onHideExport} /> */}
+        <ExportImageModal node={node} show={showExport} onClose={this.onHideExport} />
       </NodeActionsElt>
     );
   }

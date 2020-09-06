@@ -3,7 +3,7 @@ import createCache from '@emotion/cache';
 import styled from '@emotion/styled';
 import { CacheProvider, Global, css, jsx } from '@emotion/core';
 import { CatalogPanel } from './catalog/CatalogPanel';
-import { FC, useCallback, useState } from 'react';
+import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { Graph } from './graph';
 import { GraphView } from './graphview/GraphView';
 import { PageHeader } from './header/PageHeader';
@@ -11,7 +11,8 @@ import { PropertyPanel } from './propertypanel/PropertyPanel';
 import { RegistryContext, registry } from './operators/Registry';
 import { Renderer, RendererContext } from './render/Renderer';
 import { User, UserContext } from './user/User';
-import { configure } from 'mobx';
+import { configure, runInAction } from 'mobx';
+import { createBrowserHistory } from 'history';
 import { useShortcuts } from './hooks/useShortcuts';
 import 'mobx-react/batchingForReactDom';
 
@@ -44,6 +45,59 @@ const App: FC<Props> = ({ id }) => {
   const [graph, setGraph] = useState(() => new Graph());
   const [user] = useState(() => new User());
   const [renderer] = useState(() => new Renderer());
+  const [history] = useState(() => createBrowserHistory());
+
+  const path = useMemo(() => {
+    return history.location.pathname.split('/')[1];
+  }, [history]);
+
+  // Load textures when graph changes. Dispose old graph.
+  useEffect(() => {
+    for (const node of graph.nodes) {
+      node.loadTextures(renderer);
+    }
+    return () => graph.clear();
+  }, [graph, renderer]);
+
+  // Save the graph we are working on in local storage.
+  useEffect(() => {
+    const onUnload = () => {
+      if (path) {
+        console.warn('save to cloud');
+      } else {
+        localStorage.setItem('workingGraph', JSON.stringify(graph.toJs()));
+      }
+    };
+    window.addEventListener('beforeunload', onUnload);
+    return () => window.removeEventListener('beforeunload', onUnload);
+  }, [graph, path]);
+
+  // Load previous graph we were working on.
+  useEffect(() => {
+    if (path) {
+      // Load from server
+      const gr = new Graph();
+      console.warn('load from cloud');
+      setGraph(gr);
+    } else {
+      // Load from local storage.
+      const savedGraph = localStorage.getItem('workingGraph');
+      if (savedGraph) {
+        try {
+          runInAction(() => {
+            const gr = new Graph();
+            gr.fromJs(JSON.parse(savedGraph), registry);
+            if (gr.nodes.length > 0) {
+              gr.modified = true;
+            }
+            setGraph(gr);
+          });
+        } catch (e) {
+          console.error('node deserialization failed:', e);
+        }
+      }
+    }
+  }, [renderer, path]);
 
   // return {
   //   axios: this.axios,
@@ -51,7 +105,6 @@ const App: FC<Props> = ({ id }) => {
 
   // super(props);
   // this.state = {
-  //   graph: new Graph(),
   //   errorMsg: null,
   // };
 
@@ -72,11 +125,6 @@ const App: FC<Props> = ({ id }) => {
   // } else {
   //   this.loadLocalGraph(this.state.graph);
   // }
-
-  // // Save the graph we are working on in local storage.
-  // window.addEventListener('beforeunload', () => {
-  //   localStorage.setItem('workingGraph', JSON.stringify(this.state.graph.toJs()));
-  // });
 
   const onNew = useCallback(() => {
     if (!id) {
