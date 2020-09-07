@@ -71,7 +71,7 @@ export const ModalFooter = styled.footer`
   flex-wrap: wrap;
 
   > * {
-    margin-left: 12px;
+    margin-left: 8px;
     margin-bottom: 12px;
   }
 `;
@@ -135,13 +135,25 @@ const ModalElt = styled(DialogContent)`
 `;
 
 /** Modal dialog class. */
-export const Modal: FC<Props> = ({ ariaLabel, open, onClose, onExited, children, ...props }) => {
+export const Modal: FC<Props> = ({
+  ariaLabel,
+  open,
+  onClose,
+  onExited,
+  children,
+  className,
+  ...props
+}) => {
   const state = useTransition({ in: open, onExited });
   useShortcuts({}, { scope: 'dialog' });
 
   return state !== 'exited' ? (
     <ModalOverlay isOpen={true} className={classNames(state)} onDismiss={onClose}>
-      <ModalElt {...props} aria-label={ariaLabel} className={classNames('dialog', state, { open })}>
+      <ModalElt
+        {...props}
+        aria-label={ariaLabel}
+        className={classNames('dialog', className, state, { open })}
+      >
         {children}
       </ModalElt>
     </ModalOverlay>

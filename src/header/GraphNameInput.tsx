@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useRef, useState } from 'react';
+import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
 import styled from '@emotion/styled';
 import { Graph } from '../graph';
 import { colors } from '../styles';
@@ -14,30 +14,30 @@ const NameInputField = styled.input`
   flex: 1;
   background-color: ${colors.headerBg};
   vertical-align: middle;
-  padding: 9px 4px 7px 4px;
+  padding: 7px 4px;
   margin: 0 12px 0 0;
-  color: ${darken(.3, colors.headerColor)};
+  color: ${darken(0.3, colors.headerColor)};
   border: none;
   border-radius: 4px;
   outline: none;
 
   &.modified {
-    color: ${darken(.15, colors.headerColor)};
+    color: ${darken(0.15, colors.headerColor)};
   }
 
   &:focus {
-    color: ${darken(.05, colors.headerColor)};
+    color: ${darken(0.05, colors.headerColor)};
     background-color: lighten($headerBg, 10%);
   }
 `;
 
-interface State {
-  name: string;
-}
-
 export const GraphNameInput: FC<Props> = observer(({ graph }) => {
   const [name, setName] = useState('');
   const ref = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setName(graph.name);
+  }, [graph]);
 
   const onBlur = useCallback(() => {
     runInAction(() => {
@@ -46,15 +46,18 @@ export const GraphNameInput: FC<Props> = observer(({ graph }) => {
     });
   }, [graph, name]);
 
-  const onKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.keyCode === 13) {
-      runInAction(() => {
-        graph.name = name;
-        graph.modified = true;
-      });
-      ref.current?.blur();
-    }
-  }, [graph, name]);
+  const onKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.keyCode === 13) {
+        runInAction(() => {
+          graph.name = name;
+          graph.modified = true;
+        });
+        ref.current?.blur();
+      }
+    },
+    [graph, name]
+  );
 
   const onChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setName(e.target.value);
@@ -70,6 +73,7 @@ export const GraphNameInput: FC<Props> = observer(({ graph }) => {
       onBlur={onBlur}
       onKeyDown={onKeyDown}
       maxLength={64}
+      placeholder={graph.loaded ? 'Untitled document' : 'Loading...'}
     />
   );
 });

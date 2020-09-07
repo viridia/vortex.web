@@ -1,0 +1,133 @@
+{
+  "$id": "http://vortex.run/schemas/graph.schema.json",
+  "type": "object",
+  "title": "Graph",
+  "description": "Texture generator node graph",
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "description": "Name of the graph",
+      "type": "string"
+    },
+    "nodes": {
+      "description": "List of nodes",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "title": "Node",
+        "description": "A processing node",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "description": "Node id",
+            "type": "number"
+          },
+          "x": {
+            "description": "X-coordinate of the node",
+            "type": "number"
+          },
+          "y": {
+            "description": "Y-coordinate of the node",
+            "type": "number"
+          },
+          "operator": {
+            "description": "Type of proccessing operation",
+            "type": "string"
+          },
+          "params": {
+            "type": "object",
+            "title": "Map<string, Value>",
+            "description": "Map of node parameters",
+            "additionalProperties": {
+              "oneOf": [
+                { "type": "string" },
+                { "type": "number" },
+                { "type": "boolean" },
+                {
+                  "type": "array",
+                  "description": "Coords: UV, RGB, XYZ, RGBA or XYZW",
+                  "minItems": 2,
+                  "maxItems": 4,
+                  "items": {
+                    "type": "number"
+                  }
+                },
+                {
+                  "type": "array",
+                  "description": "Color Gradient",
+                  "items": {
+                    "type": "object",
+                    "title": "Color Stop",
+                    "properties": {
+                      "value": {
+                        "description": "RGBA color",
+                        "type": "array",
+                        "minItems": 4,
+                        "maxItems": 4,
+                        "items": {
+                          "type": "number"
+                        }
+                      },
+                      "position": {
+                        "type": "number",
+                        "title": "Position of the color stop",
+                        "minVal": 0,
+                        "maxVal": 1
+                      }
+                    },
+                    "required": ["value", "position"]
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "required": ["id", "x", "y", "operator", "params"]
+      }
+    },
+    "connections": {
+      "description": "List of connections between nodes",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "title": "Node",
+        "description": "A connection between nodes",
+        "additionalProperties": false,
+        "properties": {
+          "source": {
+            "description": "Input to the connection",
+            "type": "object",
+            "properties": {
+              "node": {
+                "description": "Source node",
+                "type": "number"
+              },
+              "terminal": {
+                "description": "Source terminal",
+                "type": "string"
+              }
+            },
+            "required": ["node", "terminal"]
+          },
+          "destination": {
+            "description": "Output from the connection",
+            "type": "object",
+            "properties": {
+              "node": {
+                "description": "Destination node",
+                "type": "number"
+              },
+              "terminal": {
+                "description": "Destination terminal",
+                "type": "string"
+              }
+            },
+            "required": ["node", "terminal"]
+          }
+        },
+        "required": ["source", "destination"]
+      }
+    }
+  },
+  "required": ["name", "nodes", "connections"]
+}

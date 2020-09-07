@@ -1,16 +1,15 @@
 /** @jsx jsx */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import bind from 'bind-decorator';
 import classNames from 'classnames';
 import githubImg from '../images/github.png';
 import styled from '@emotion/styled';
 import vortexImg from '../images/vortex.png';
-import { Component } from 'react';
+import { FC, useCallback, useContext, useState } from 'react';
 import { Graph } from '../graph';
 import { GraphActions } from './GraphActions';
 import { GraphNameInput } from './GraphNameInput';
 import { LoginButton } from './LoginButton';
 import { LoginDialog } from './LoginDialog';
+import { SessionContext } from '../Session';
 import { colors } from '../styles';
 import { darken } from 'polished';
 import { jsx } from '@emotion/core';
@@ -55,66 +54,48 @@ const GithubLink = styled.a`
 
 interface Props {
   graph: Graph;
-  graphId?: string;
+  docId?: string;
   onNew: () => void;
-  // onSave: () => void;
+  onSave: () => void;
 }
 
-interface State {
-  showLogin: boolean;
-  postLoginAction: string | null;
-}
+export const PageHeader: FC<Props> = observer(({ graph, docId, onNew, onSave }) => {
+  const [showLogin, setShowLogin] = useState(false);
+  const session = useContext(SessionContext);
 
-@observer
-export class PageHeader extends Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      showLogin: false,
-      postLoginAction: null,
-    };
-  }
-
-  public render() {
-    const { graph, graphId, onNew } = this.props;
-    const { showLogin, postLoginAction } = this.state;
-    return (
-      <PageHeaderStyle className="page-header">
-        <VortexLogo src={vortexImg} alt="Vortex" />
-        <PageTitle className={classNames('title', { modified: graph.modified })}>Vortex</PageTitle>
-        <DocName className="doc-name">-</DocName>
-        <GraphNameInput graph={graph} />
-        <GithubLink
-          className="github-link"
-          href="https://github.com/viridia/vortex"
-          title="Source Code"
-        >
-          <img src={githubImg} alt="GitHub" />
-        </GithubLink>
-        <GraphActions graph={graph} graphId={graphId} onSave={this.onSave} onNew={onNew} />
-        <LoginButton css={{ marginLeft: '8px' }} onLogin={this.onShowLogin} />
-        <LoginDialog open={showLogin} onClose={this.onHideLogin} postLoginAction={postLoginAction} />
-      </PageHeaderStyle>
-    );
-  }
-
-  @bind
-  private onSave() {
-    if (localStorage.getItem('session')) {
-      // TODO
-      // this.props.onSave();
+  const onClickSave = useCallback(() => {
+    if (session.isLoggedIn) {
+      onSave();
     } else {
-      this.setState({ showLogin: true, postLoginAction: 'save' });
+      localStorage.setItem('savePostLogin', JSON.stringify(graph.toJs()));
+      setShowLogin(true);
     }
-  }
+  }, [graph, onSave, session.isLoggedIn]);
 
-  @bind
-  private onShowLogin() {
-    this.setState({ showLogin: true });
-  }
+  const onShowLogin = useCallback(() => {
+    setShowLogin(true);
+  }, []);
 
-  @bind
-  private onHideLogin() {
-    this.setState({ showLogin: false });
-  }
-}
+  const onHideLogin = useCallback(() => {
+    setShowLogin(false);
+  }, []);
+
+  return (
+    <PageHeaderStyle className="page-header">
+      <VortexLogo src={vortexImg} alt="Vortex" />
+      <PageTitle className={classNames('title', { modified: graph.modified })}>Vortex</PageTitle>
+      <DocName className="doc-name">-</DocName>
+      <GraphNameInput graph={graph} />
+      <GithubLink
+        className="github-link"
+        href="https://github.com/viridia/vortex"
+        title="Source Code"
+      >
+        <img src={githubImg} alt="GitHub" />
+      </GithubLink>
+      <GraphActions graph={graph} docId={docId} onSave={onClickSave} onNew={onNew} />
+      <LoginButton css={{ marginLeft: '8px' }} onLogin={onShowLogin} />
+      <LoginDialog open={showLogin} onClose={onHideLogin} />
+    </PageHeaderStyle>
+  );
+});

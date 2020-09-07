@@ -42,6 +42,7 @@ export const colors = {
   buttonActiveBg: `linear-gradient(to bottom, ${darken(.15, shades.coolGray)}, ${darken(.05, shades.coolGray)})`,
   buttonSelectedBg: `linear-gradient(to bottom, ${darken(.1, shades.coolGray)}, ${darken(.05, shades.coolGray2)})`,
   buttonBorderColor: darken(.3, shades.coolGray),
+  buttonTextColor: '#000',
 
   buttonDarkBg: `linear-gradient(to bottom, ${lighten(.25, shades.coolGray7)}, ${lighten(.15, shades.coolGray7)})`,
   buttonDarkActiveBg: `linear-gradient(to bottom, ${lighten(.35, shades.coolGray7)}, ${lighten(.25, shades.coolGray7)})`,

@@ -1,4 +1,4 @@
-import { CodeGen } from './CodeGen';
+import { CodeGen, StringChunk } from './CodeGen';
 import { DataType } from '../operators';
 import {
   ExprNode,
@@ -13,8 +13,6 @@ import { GraphNode } from '../graph';
 import { byName } from '../operators/library/shaders';
 
 const MAX_COLS = 80;
-
-type StringTree = string | StringTree[];
 
 /** Observer that regenerates a shader when the inputs change. */
 export class ShaderGenerator {
@@ -246,34 +244,103 @@ function isSimpleExpr(expr: ExprNode): boolean {
   }
 }
 
-function treeLength(input: StringTree): number {
+function treeLength(input: StringChunk): number {
   if (typeof input === 'string') {
     return input.length;
   } else {
-    return input.reduce((acc: number, elt) => {
+    return input.fragments.reduce((acc: number, elt) => {
       return acc + treeLength(elt);
     }, 0);
   }
 }
 
-function flatten(input: StringTree): string {
+function flatten(input: StringChunk | StringChunk[]): string {
   if (typeof input === 'string') {
     return input;
-  } else {
+  } else if (Array.isArray(input)) {
     return input.map(flatten).join('');
+  } else {
+    return input.fragments.map(flatten).join('');
   }
 }
 
-function breakLines(out: string[], input: StringTree, indent: number) {
+function breakLines(out: string[], input: StringChunk, indent: number) {
   if (typeof input === 'string' || indent * 2 + treeLength(input) <= MAX_COLS) {
     // No need for break, line will fit
-    out.push('  '.repeat(indent) + flatten(input).trimEnd());
-  } else if (input.length > 0) {
-    let wrapIndent = indent;
-    input.forEach(elt => {
-      breakLines(out, elt, wrapIndent);
-      wrapIndent = indent + 1;
-    });
+    out.push('  '.repeat(indent) + flatten(input).trim());
+  } else if (input.fragments.length > 0) {
+    if (input.wrap === 'list') {
+      // Just break at every fragment.
+      let wrapIndent = indent;
+      input.fragments.forEach(elt => {
+        breakLines(out, elt, wrapIndent);
+        wrapIndent = indent + 1;
+      });
+    } else if (input.wrap === 'flat') {
+      greedyWrap(out, input.fragments, indent);
+    } else {
+      const [left, right] = input.fragments;
+      let leftLength = treeLength(left);
+      if (leftLength + indent * 2 > MAX_COLS || typeof right === 'string') {
+        // Left side won't fit, fall back to greedy. Or right side can't be broken.
+        const joined = [
+          ...(typeof left === 'string' ? [left] : left.fragments),
+          ...(typeof right === 'string' ? [right] : right.fragments),
+        ];
+        greedyWrap(out, joined, indent);
+      } else {
+        // This is kind of like greedywrap, except that we keep adding to the left.
+        const head: StringChunk[] = [...typeof left === 'string' ? [left] : left.fragments];
+        let index = 0;
+        while (index < right.fragments.length) {
+          const fragLength = treeLength(right.fragments[index]);
+          if (leftLength + fragLength + indent * 2 > MAX_COLS) {
+            break;
+          }
+          head.push(right.fragments[index]);
+          leftLength += fragLength;
+          index += 1;
+          if (right.wrap === 'list') {
+            // If right is list style, only allow the first fragment to be joined with left.
+            break;
+          }
+        }
+        out.push('  '.repeat(indent) + flatten(head).trim());
+        greedyWrap(out, right.fragments.slice(index), indent + 1);
+      }
+    }
+  }
+}
+
+function greedyWrap(out: string[], fragments: StringChunk[], indent: number) {
+  // Use a greedy algorithm
+  let wrapIndent = indent;
+  let lineStart = 0;
+  while (lineStart < fragments.length) {
+    let lineEnd = lineStart;
+    let lineLength = 0;
+    while (lineEnd < fragments.length) {
+      const fragLength = treeLength(fragments[lineEnd]);
+      if (lineLength + fragLength + wrapIndent * 2 > MAX_COLS) {
+        // Fragment won't fit on the line, break at this point.
+        break;
+      }
+
+      // Fragment will fit, keep going.
+      lineEnd += 1;
+      lineLength += fragLength;
+    }
+
+    if (lineEnd === lineStart) {
+      // First fragment is too big, recurse.
+      breakLines(out, fragments[lineStart], wrapIndent);
+      lineStart += 1;
+    } else {
+      out.push('  '.repeat(wrapIndent) + flatten(fragments.slice(lineStart, lineEnd)).trim());
+      lineStart = lineEnd;
+    }
+
+    wrapIndent = indent + 1;
   }
 }
 

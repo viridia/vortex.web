@@ -1,10 +1,14 @@
+/** @jsx jsx */
 import React from 'react';
 import githubImg from '../images/github.png';
+import qs from 'qs';
 import styled from '@emotion/styled';
+import { AUTH_HOST } from '../network';
 import { Button } from '../controls/Button';
 import { FC, useCallback } from 'react';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from '../controls/Modal';
 import { colors } from '../styles';
+import { jsx } from '@emotion/core';
 import { lighten } from 'polished';
 
 // const googleImg: string = require('../../../images/google.png');
@@ -17,7 +21,7 @@ const LoginButton = styled.a`
   border: none;
   color: #fff;
   font-size: 18px;
-  width: 12em;
+  width: 16rem;
   padding: 12px;
   margin-bottom: 4px;
   text-decoration: none;
@@ -28,14 +32,14 @@ const LoginButton = styled.a`
   &.google {
     background: ${colors.buttonLoginGoogleBg};
     &:active {
-      background: ${lighten(.05, colors.buttonLoginGoogleBg)};
+      background: ${lighten(0.05, colors.buttonLoginGoogleBg)};
     }
   }
 
   &.github {
     background: ${colors.buttonLoginGitHubBg};
     &:active {
-      background: ${lighten(.05, colors.buttonLoginGitHubBg)};
+      background: ${lighten(0.05, colors.buttonLoginGitHubBg)};
     }
   }
 
@@ -47,25 +51,27 @@ const LoginButton = styled.a`
 
 interface Props {
   open: boolean;
-  postLoginAction: string | null;
   onClose: () => void;
 }
 
-// @observer
-export const LoginDialog: FC<Props> = ({ open, postLoginAction, onClose }) => {
-  const saveUrl = postLoginAction
-      ? `${window.location.pathname}?action=${postLoginAction}` : window.location.pathname;
-  const thisUrl = `${window.location.protocol}//${window.location.host}`;
-  const nextUrl = `?next=${encodeURIComponent(saveUrl)}`;
+export const LoginDialog: FC<Props> = ({ open, onClose }) => {
+  const apiUrl = new URL(AUTH_HOST);
+  const nextUrl = qs.stringify({ next: window.location.pathname }, { addQueryPrefix: true });
 
   const onClickLogin = useCallback((e: React.MouseEvent<HTMLElement>) => {
     window.location.href = e.currentTarget.getAttribute('href')!;
   }, []);
 
   return (
-    <Modal className="login" open={open} onClose={onClose} ariaLabel="Login" >
+    <Modal
+      className="login"
+      open={open}
+      onClose={onClose}
+      ariaLabel="Login"
+      css={{ width: '20rem' }}
+    >
       <ModalHeader>Login</ModalHeader>
-      <ModalBody>
+      <ModalBody css={{ alignItems: 'center' }}>
         {/* <LoginButton
             className="login google"
             href={`${thisUrl}/auth/google${nextUrl}`}
@@ -75,9 +81,9 @@ export const LoginDialog: FC<Props> = ({ open, postLoginAction, onClose }) => {
           Login with Google
         </LoginButton> */}
         <LoginButton
-            className="login github"
-            href={`${thisUrl}/auth/github${nextUrl}`}
-            onClick={onClickLogin}
+          className="login github"
+          href={`${apiUrl}auth/github${nextUrl}`}
+          onClick={onClickLogin}
         >
           <img className="logo" src={githubImg} alt="Github" />
           Login with GitHub
@@ -92,8 +98,10 @@ export const LoginDialog: FC<Props> = ({ open, postLoginAction, onClose }) => {
         </LoginButton> */}
       </ModalBody>
       <ModalFooter className="modal-buttons">
-        <Button className="close" onClick={onClose}>Cancel</Button>
+        <Button className="close" onClick={onClose}>
+          Cancel
+        </Button>
       </ModalFooter>
     </Modal>
   );
-}
+};

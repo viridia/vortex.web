@@ -58,6 +58,7 @@
       "last 1 safari version"
     ]
   },
+  "proxy": "http://localhost:9001",
   "dependencies": {
     "@emotion/core": "^10.0.35",
     "@emotion/styled": "^10.0.27",
@@ -72,6 +73,7 @@
     "bind-decorator": "^1.0.11",
     "classnames": "^2.2.6",
     "copy-to-clipboard": "^3.3.1",
+    "dateformat": "^3.0.3",
     "downloadjs": "^1.4.7",
     "float-hsl2rgb": "^1.0.2",
     "float-rgb2hsl": "^1.0.1",
@@ -81,6 +83,7 @@
     "mobx": "^5.15.6",
     "mobx-react": "^6.2.5",
     "polished": "^3.6.5",
+    "qs": "^6.9.4",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-router": "^5.2.0",
@@ -89,9 +92,11 @@
   },
   "devDependencies": {
     "@types/classnames": "^2.2.10",
+    "@types/dateformat": "^3.0.1",
     "@types/downloadjs": "^1.4.2",
     "@types/marked": "^1.1.0",
     "@types/node": "^12.12.54",
+    "@types/qs": "^6.9.4",
     "@types/webpack-env": "^1.15.2",
     "eslint-plugin-sort-imports-es6-autofix": "^0.5.0"
   }

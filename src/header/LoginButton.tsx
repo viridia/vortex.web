@@ -1,7 +1,7 @@
 import React, { FC, useCallback, useContext } from 'react';
 import classNames from 'classnames';
 import { Button } from '../controls/Button';
-import { UserContext } from '../user/User';
+import { SessionContext } from '../Session';
 import { observer } from 'mobx-react';
 
 interface Props {
@@ -10,7 +10,7 @@ interface Props {
 }
 
 export const LoginButton: FC<Props> = observer(({ onLogin, className, ...props }) => {
-  const user = useContext(UserContext);
+  const session = useContext(SessionContext);
 
   const onClickLogin = useCallback(
     (e: React.MouseEvent) => {
@@ -20,11 +20,11 @@ export const LoginButton: FC<Props> = observer(({ onLogin, className, ...props }
   );
 
   const onClickLogout = useCallback((e: React.MouseEvent) => {
-    localStorage.removeItem('session');
+    session.signOut();
     window.location.reload();
-  }, []);
+  }, [session]);
 
-  if (user.isLoggedIn) {
+  if (session.isLoggedIn) {
     return (
       <Button {...props} className={classNames('dark', className)} onClick={onClickLogout}>
         Logout

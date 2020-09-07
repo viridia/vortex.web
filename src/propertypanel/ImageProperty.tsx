@@ -6,6 +6,7 @@ import { Graph, GraphNode } from '../graph';
 import { Observer } from 'mobx-react';
 import { Parameter } from '../operators';
 import { RendererContext } from '../render/Renderer';
+import { axiosInstance } from '../network';
 import { reaction, runInAction } from 'mobx';
 
 const ImagePropertyPanel = styled.section`
@@ -64,7 +65,7 @@ export const ImageProperty: FC<Props> = ({ parameter, node, graph }) => {
       const file = fileEl.current.files[0];
       const formData = new FormData();
       formData.append('attachment', file);
-      Axios.post('/api/images', formData).then(resp => {
+      axiosInstance.post('/api/images', formData).then(resp => {
         renderer.loadTexture(resp.data.url, texture => {
           runInAction(() => {
             node.glResources?.textures.set(parameter.id, texture);

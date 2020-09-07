@@ -2,10 +2,10 @@ import { DataType, Operator, Output, Parameter } from '..';
 import { ExprNode, defineFn, refTexCoords, refUniform } from '../../render/ExprNode';
 import { GraphNode } from '../../graph';
 
-const IMPORTS = new Set(['waves2']);
+const IMPORTS = new Set(['waves']);
 
 export const waves = defineFn({
-  name: 'waves2',
+  name: 'waves',
   result: DataType.FLOAT,
   args: [
     DataType.VEC2,

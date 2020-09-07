@@ -1,155 +1,121 @@
-// import LoadGraphDialog from './LoadGraphDialog';
-import React, { Component } from 'react';
-import bind from 'bind-decorator';
+import React, { FC, useCallback, useContext, useRef, useState } from 'react';
 import { Button } from '../controls/Button';
 import { ButtonGroup } from '../controls/ButtonGroup';
 import { Graph } from '../graph';
+import { LoadGraphDialog } from './LoadGraphDialog';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from '../controls/Modal';
-import { User } from '../user/User';
+import { SessionContext } from '../Session';
 import { observer } from 'mobx-react';
-
-// import './GraphActions.scss';
 
 interface Props {
   graph: Graph;
-  graphId?: string;
+  docId?: string;
   onSave: () => void;
   onNew: () => void;
 }
 
-interface State {
-  showConfirmClear: boolean;
-  showDownload: boolean;
-  showLoad: boolean;
-  repeat: number;
-}
+export const GraphActions: FC<Props> = observer(({ graph, docId, onNew, onSave }) => {
+  const downloadEl = useRef<HTMLAnchorElement>(null);
+  const [showConfirmClear, setShowConfirmClear] = useState(false);
+  const [showLoad, setShowLoad] = useState(false);
+  const session = useContext(SessionContext);
 
-@observer
-export class GraphActions extends Component<Props, State> {
-  private downloadEl: HTMLAnchorElement | null = null;
+    const onClickLoad = useCallback((e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setShowLoad(true);
+    }, []);
 
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      showConfirmClear: false,
-      showDownload: false,
-      showLoad: false,
-      repeat: 1,
-    };
-  }
+    const onClickSave = useCallback((e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      onSave();
+    }, [onSave]);
 
-  public render() {
-    const { graphId } = this.props;
-    const { showConfirmClear /*, showDownload, showLoad, repeat */ } = this.state;
+    const onClickDownload = useCallback((e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const text = JSON.stringify(graph.toJs(), null, 2);
+      if (downloadEl.current) {
+        downloadEl.current.setAttribute(
+          'href',
+          'data:application/json;charset=utf-8,' + encodeURIComponent(text)
+        );
+        downloadEl.current.setAttribute('download', graph.name + '.vortex.json');
+        downloadEl.current.click();
+      }
+    }, [graph]);
 
-    const user: User = this.context.user;
-    return (
-      <section className="graph-actions">
-        <a
-          ref={(el: HTMLAnchorElement | null) => {
-            this.downloadEl = el;
-          }}
-          href="https://x"
-          style={{ display: 'none' }}
-        >
-          &nbsp;
-        </a>
-        <ButtonGroup>
-          <Button className="dark" onClick={this.onClickNew}>
-            New
+    const onClickNew = useCallback(() => {
+      onNew();
+    }, [onNew]);
+
+    const onClickConfirmClear = useCallback(() => {
+      setShowConfirmClear(false);
+      graph.clear();
+    }, [graph]);
+
+    const onClickCancelClear = useCallback(() => {
+      setShowConfirmClear(false);
+    }, []);
+
+    const onHideConfirmClear = useCallback(() => {
+      setShowConfirmClear(false);
+    }, []);
+
+    const onCloseLoad = useCallback(() => {
+      setShowLoad(false);
+    }, []);
+
+  return (
+    <section className="graph-actions">
+      <a
+        ref={downloadEl}
+        href="https://x"
+        style={{ display: 'none' }}
+      >
+        &nbsp;
+      </a>
+      <ButtonGroup>
+        <Button className="dark" onClick={onClickNew}>
+          New
+        </Button>
+        {session.isLoggedIn !== false && (
+          <Button className="dark" onClick={onClickLoad}>
+            Load&hellip;
           </Button>
-          {user?.isLoggedIn !== false && (
-            <Button className="dark" onClick={this.onClickLoad}>
-              Load&hellip;
-            </Button>
-          )}
-          {graphId ? (
-            <Button className="dark" onClick={this.onClickSave}>
-              Fork
-            </Button>
-          ) : (
-            <Button className="dark" onClick={this.onClickSave}>
-              Save
-            </Button>
-          )}
-          <Button className="dark" onClick={this.onClickDownload}>
-            Download
+        )}
+        {session.isLoggedIn && graph.ownedByAnother ? (
+          <Button className="dark" onClick={onClickSave}>
+            Fork
           </Button>
-        </ButtonGroup>
-        <Modal
-          ariaLabel="Clear graph"
-          className="confirm"
-          open={showConfirmClear}
-          onClose={this.onHideConfirmClear}
-        >
-          <ModalHeader>Clear graph</ModalHeader>
-          <ModalBody>Erase all document data?</ModalBody>
-          <ModalFooter className="modal-buttons">
-            <button className="close" onClick={this.onClickCancelClear}>
-              Cancel
-            </button>
-            <button className="close" onClick={this.onClickConfirmClear}>
-              Clear
-            </button>
-          </ModalFooter>
-        </Modal>
-        {/* <LoadGraphDialog open={showLoad} onHide={this.onHideLoad} /> */}
-      </section>
-    );
-  }
-
-  @bind
-  private onClickLoad(e: React.MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    this.setState({ showLoad: true });
-  }
-
-  @bind
-  private onClickSave(e: React.MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    this.props.onSave();
-  }
-
-  @bind
-  private onClickDownload(e: React.MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    const { graph } = this.props;
-    const text = JSON.stringify(graph.toJs(), null, 2);
-    this.downloadEl?.setAttribute(
-      'href',
-      'data:application/json;charset=utf-8,' + encodeURIComponent(text)
-    );
-    this.downloadEl?.setAttribute('download', graph.name + '.vortex.json');
-    this.downloadEl?.click();
-  }
-
-  @bind
-  private onClickNew() {
-    this.props.onNew();
-  }
-
-  @bind
-  private onClickConfirmClear(e: React.MouseEvent) {
-    this.setState({ showConfirmClear: false });
-    const { graph } = this.props;
-    graph.clear();
-  }
-
-  @bind
-  private onClickCancelClear(e: React.MouseEvent) {
-    this.setState({ showConfirmClear: false });
-  }
-
-  @bind
-  private onHideConfirmClear() {
-    this.setState({ showConfirmClear: false });
-  }
-
-  @bind
-  private onHideLoad() {
-    this.setState({ showLoad: false });
-  }
-}
+        ) : (
+          <Button className="dark" onClick={onClickSave} disabled={!graph.modified}>
+            Save
+          </Button>
+        )}
+        <Button className="dark" onClick={onClickDownload}>
+          Download
+        </Button>
+      </ButtonGroup>
+      <Modal
+        ariaLabel="Clear graph"
+        className="confirm"
+        open={showConfirmClear}
+        onClose={onHideConfirmClear}
+      >
+        <ModalHeader>Clear graph</ModalHeader>
+        <ModalBody>Erase all document data?</ModalBody>
+        <ModalFooter className="modal-buttons">
+          <button className="close" onClick={onClickCancelClear}>
+            Cancel
+          </button>
+          <button className="close" onClick={onClickConfirmClear}>
+            Clear
+          </button>
+        </ModalFooter>
+      </Modal>
+      <LoadGraphDialog open={showLoad} onClose={onCloseLoad} />
+    </section>
+  );
+});

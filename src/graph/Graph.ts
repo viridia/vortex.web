@@ -10,18 +10,19 @@ import { action, computed, observable } from 'mobx';
 const DOC_WIDTH = 4000;
 
 export class Graph {
-  @observable public name: string;
+  @observable public name: string = '';
   @observable public author: string = '';
-  @observable public id: string = '';
   @observable.shallow public nodes: GraphNode[];
   @observable public bounds: Bounds;
   @observable public modified: boolean = false;
-  @observable public ownedByUser: boolean = false;
+  @observable public loaded: boolean = false;
+  @observable public ownedByUser: boolean = false; // Doc is owned by current user
+  @observable public ownedByAnother: boolean = false; // Owned by someone other than current user
+  public saveAfterLogin = false;
 
   private nodeCount = 0;
 
   constructor() {
-    this.name = 'untitled';
     this.nodes = [];
     this.bounds = new Bounds(-DOC_WIDTH / 2, -DOC_WIDTH / 2, DOC_WIDTH / 2, DOC_WIDTH / 2);
   }
@@ -144,6 +145,11 @@ export class Graph {
     // Delete all selected nodes
     this.nodes = this.nodes.filter(n => !n.selected);
     this.modified = true;
+  }
+
+  @action
+  public setLoaded() {
+    this.loaded = true;
   }
 
   @action

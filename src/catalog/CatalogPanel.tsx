@@ -20,10 +20,6 @@ const ToolPanelAside = styled.aside`
   }
 `;
 
-interface State {
-  operator: Operator;
-}
-
 export const CatalogPanel: FC = () => {
   const [operator, setOperator] = useState<Operator | null>(null);
   const registry = useContext(RegistryContext);

@@ -1,10 +1,12 @@
 import styled from '@emotion/styled';
 import { colors } from '../styles';
+import { transparentize } from 'polished';
 
 export const Button = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
+  color: ${colors.buttonTextColor};
   height: 32px;
   padding: 0 12px;
   border-radius: 4px;
@@ -23,8 +25,11 @@ export const Button = styled.button`
   }
 
   &[disabled] {
-    opacity: .5;
     pointer-events: none;
+    color: ${transparentize(0.5, colors.buttonTextColor)};
+    &.dark {
+      color: ${transparentize(0.5, colors.buttonDarkTextColor)};
+    }
   }
 
   &.dark {
@@ -39,10 +44,5 @@ export const Button = styled.button`
     &.selected {
       background-image: ${colors.buttonDarkSelectedBg};
     }
-
-    &[disabled] {
-      opacity: .7;
-    }
   }
-
 `;
