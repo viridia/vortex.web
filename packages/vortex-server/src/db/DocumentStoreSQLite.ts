@@ -8,7 +8,7 @@ const DB_NAME = process.env.SQLITE_DB_NAME || 'Documents';
 export class DocumentStoreSQLite implements DocumentStore {
   private db = new Database(path.resolve(__dirname, '../..', DB_FILE));
 
-  public init(): Promise<any> {
+  public constructor() {
     this.db
       .prepare(
         `CREATE TABLE IF NOT EXISTS ${DB_NAME} (
@@ -21,13 +21,13 @@ export class DocumentStoreSQLite implements DocumentStore {
     )`
       )
       .run();
-    return Promise.resolve();
   }
 
   public listDocuments(user: string): Promise<DocumentListEntry[]> {
     const docs = this.db.prepare(`SELECT * from ${DB_NAME}`).all();
     docs.forEach(doc => {
-      doc.data = JSON.parse(doc.data);
+      const data = JSON.parse(doc.data);
+      doc.name = data?.name;
     })
     return Promise.resolve(docs);
   }

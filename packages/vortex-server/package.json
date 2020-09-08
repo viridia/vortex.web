@@ -4,12 +4,15 @@
   "description": "Cloud storage for vortex graphs.",
   "main": "src/index.ts",
   "scripts": {
+    "build": "webpack",
+    "clean": "rm -rf build",
     "server": "ts-node ./src/index.ts",
     "start": "nodemon",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
     "ajv": "^6.12.4",
+    "aws-lambda": "^1.0.6",
     "aws-sdk": "^2.747.0",
     "better-sqlite3": "^7.1.0",
     "body-parser": "^1.19.0",
@@ -27,6 +30,7 @@
     "yeast": "^0.1.2"
   },
   "devDependencies": {
+    "@types/aws-lambda": "^8.10.62",
     "@types/better-sqlite3": "^5.4.0",
     "@types/body-parser": "^1.19.0",
     "@types/compression": "^1.7.0",
@@ -39,10 +43,13 @@
     "@types/passport-google-oauth20": "^2.0.3",
     "@types/passport-jwt": "^3.0.3",
     "@types/yeast": "^0.1.1",
+    "builtin-modules": "^3.1.0",
     "nodemon": "^2.0.4",
-    "rollup": "^2.26.10",
+    "ts-loader": "^8.0.3",
     "ts-node": "^9.0.0",
-    "typescript": "^4.0.2"
+    "typescript": "^4.0.2",
+    "webpack": "^4.44.1",
+    "webpack-cli": "^3.3.12"
   },
   "nodemonConfig": {
     "ignore": [

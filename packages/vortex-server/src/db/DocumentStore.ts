@@ -21,7 +21,6 @@ export interface DocumentListEntry {
 }
 
 export default interface DocumentStore {
-  init(): Promise<any>;
   listDocuments(user: string): Promise<DocumentListEntry[]>;
   getDocument(id: string): Promise<Document>;
   createDocument(data: GraphData, user: string, userName: string): Promise<string>;

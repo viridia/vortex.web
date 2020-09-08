@@ -11,18 +11,6 @@ const validate = validator.compile(graphSchema);
 
 export function addDocRoutes(app: Express, docStore: DocumentStore) {
   app.get('/api/docs', async (req, res, next) => {
-    docStore.listDocuments('x').then(
-      docList => {
-        res.json(docList);
-      },
-      error => {
-        console.error(error);
-        res.status(500).json({ code: 'InternalError', message: String(error) });
-      }
-    );
-  });
-
-  app.get('/api/docs', async (req, res, next) => {
     passport.authenticate(
       'jwt',
       { session: false },

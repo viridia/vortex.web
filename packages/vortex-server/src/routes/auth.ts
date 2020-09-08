@@ -34,7 +34,7 @@ function createToken(emails: Array<{ value: string }>, displayName: string): Use
 
 function makeCallbackUrl(pathname: string, next?: string): string {
   const url = new URL(process.env.SERVER_URL);
-  url.pathname = pathname;
+  url.pathname = url.pathname + pathname;
   url.search = qs.stringify({ next }, { addQueryPrefix: true });
   return url.toString();
 }
@@ -75,7 +75,7 @@ function addGithub(app: Express) {
   app.get('/auth/github', (req, res, next) => {
     const options = {
       session: false,
-      callbackURL: makeCallbackUrl('/auth/github/callback', queryParam(req, 'next')),
+      callbackURL: makeCallbackUrl('auth/github/callback', queryParam(req, 'next')),
     };
     passport.authenticate('github', options)(req, res, next);
   });

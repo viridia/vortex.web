@@ -1,4 +1,4 @@
-import dotenv from 'dotenv';
+import { config } from 'dotenv';
 
 // In it's own file so we can ensure it gets run first.
-dotenv.config();
+config();

@@ -84,7 +84,7 @@ export const LoadGraphDialog: FC<Props> = ({ open, onClose }) => {
       axiosInstance.get('/api/docs').then(resp => {
         setList(
           resp.data.map((record: any) => ({
-            name: record.data.name,
+            name: record.name,
             id: record.id,
             created: new Date(record.created),
           }))
