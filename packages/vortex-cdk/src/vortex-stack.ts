@@ -36,10 +36,11 @@ export class VortexStack extends cdk.Stack {
       domainName: SITE_DOMAIN,
       hostedZone: zone,
       region: 'us-east-1', // Cloudfront only checks this region for certificates.
-      subjectAlternativeNames: [`*.${SITE_DOMAIN}`],
+      subjectAlternativeNames: [`www.${SITE_DOMAIN}`, `api.${SITE_DOMAIN}`],
       validationDomains: {
         [SITE_DOMAIN]: SITE_DOMAIN,
-        [`*.${SITE_DOMAIN}`]: SITE_DOMAIN
+        ['www.${SITE_DOMAIN}']: SITE_DOMAIN,
+        ['api.${SITE_DOMAIN}']: SITE_DOMAIN
       },
     }).certificateArn;
     new cdk.CfnOutput(this, 'Certificate', { value: certificateArn });
