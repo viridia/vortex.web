@@ -62,6 +62,17 @@ One you have a .env file, you can run:
 
 Then navigate to http://localhost:9001
 
+### Vortex 2.0
+
+This repository is a complete re-write of the original Vortex code. Changes:
+
+* The biggest change is that Vortex 2.0 is much more focused on improving shader source
+  code quality, as opposed to only caring about the images being exported. The hope is to
+  make this a platform for general shader development.
+* Migrated from Preact to React.
+* Migrated from SASS to emotion.
+* Converted most components from classes to functions.
+
 ## Articles
 
   * [The technology behind Vortex](https://medium.com/machine-words/the-technology-behind-vortex-a-real-time-browser-based-seamless-texture-generator-b18807fd8865)
@@ -76,9 +87,7 @@ been entirely rewritten in JavaScript and runs entirely in the browser.
 
 ## Looking for Contributions
 
-I would be very interested in contributions for additional operator types. Note, however, that
-it is strongly preferred that operators be seamlessly tileable, which can be a challenge
-with certain algorithms.
+I would be very interested in contributions for additional operator types.
 
 Feel free to create a GitHub issue if you have an idea you'd like to see implemented.
 
