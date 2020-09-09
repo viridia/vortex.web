@@ -18,7 +18,6 @@
     "experimentalDecorators": true,
     "strictPropertyInitialization":false,
     "typeRoots": ["./node_modules/@types"],
-    "esModuleInterop": true,
     "outDir": "./build"
   },
   "include": ["src"]
