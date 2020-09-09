@@ -1,6 +1,7 @@
 /** @jsx jsx */
 import React from 'react';
 import githubImg from '../images/github.png';
+import googleImg from '../images/google.png';
 import qs from 'qs';
 import styled from '@emotion/styled';
 import { AUTH_HOST } from '../network';
@@ -10,8 +11,6 @@ import { Modal, ModalBody, ModalFooter, ModalHeader } from '../controls/Modal';
 import { colors } from '../styles';
 import { jsx } from '@emotion/core';
 import { lighten } from 'polished';
-
-// const googleImg: string = require('../../../images/google.png');
 
 const LoginButton = styled.a`
   display: flex;
@@ -72,14 +71,14 @@ export const LoginDialog: FC<Props> = ({ open, onClose }) => {
     >
       <ModalHeader>Login</ModalHeader>
       <ModalBody css={{ alignItems: 'center' }}>
-        {/* <LoginButton
+        <LoginButton
             className="login google"
-            href={`${thisUrl}/auth/google${nextUrl}`}
-            onClick={this.onClickLogin}
+            href={`${apiUrl}auth/google${nextUrl}`}
+            onClick={onClickLogin}
         >
-          <img className="logo" src={googleImg} />
+          <img className="logo" src={googleImg} alt="Google" />
           Login with Google
-        </LoginButton> */}
+        </LoginButton>
         <LoginButton
           className="login github"
           href={`${apiUrl}auth/github${nextUrl}`}
@@ -88,14 +87,6 @@ export const LoginDialog: FC<Props> = ({ open, onClose }) => {
           <img className="logo" src={githubImg} alt="Github" />
           Login with GitHub
         </LoginButton>
-        {/* <LoginButton
-            className="login facebook"
-            href={`${thisUrl}/auth/facebook${nextUrl}`}
-            onClick={onClickLogin}
-        >
-          <img className="logo" src={facebookImg} />
-          Login with Facebook
-        </LoginButton> */}
       </ModalBody>
       <ModalFooter className="modal-buttons">
         <Button className="close" onClick={onClose}>

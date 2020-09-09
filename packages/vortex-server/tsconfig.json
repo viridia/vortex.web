@@ -5,8 +5,7 @@
     "allowJs": false,
     "outDir": "./build",
     "types": [
-      "node",
-      "jest"
+      "node"
     ],
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,

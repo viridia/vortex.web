@@ -7,12 +7,13 @@
     "build": "webpack",
     "clean": "rm -rf build",
     "server": "ts-node ./src/index.ts",
-    "start": "nodemon",
+    "start": "nodemon --exec ts-node -r dotenv/config ./src/index.ts dotenv_config_path=../../.env",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
     "ajv": "^6.12.4",
     "aws-lambda": "^1.0.6",
+    "aws-serverless-express": "^3.3.8",
     "aws-sdk": "^2.747.0",
     "better-sqlite3": "^7.1.0",
     "body-parser": "^1.19.0",
@@ -31,6 +32,7 @@
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.62",
+    "@types/aws-serverless-express": "^3.3.3",
     "@types/better-sqlite3": "^5.4.0",
     "@types/body-parser": "^1.19.0",
     "@types/compression": "^1.7.0",
@@ -61,7 +63,6 @@
     "watch": [
       "src"
     ],
-    "exec": "npm run server",
     "ext": "ts"
   }
 }
