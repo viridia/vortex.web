@@ -13,13 +13,16 @@ import * as path from 'path';
 
 const SITE_CONTENT_DIR = path.resolve(__dirname, '../../vortex-client/build');
 const SITE_DOMAIN = process.env.SITE_DOMAIN || '';
+const API_DOMAIN = `api.${SITE_DOMAIN}`;
+const SITE_URL = `https://${SITE_DOMAIN}`;
+const API_URL = `https://${API_DOMAIN}`;
 
 export class VortexStack extends cdk.Stack {
   constructor(scope: cdk.App, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
     const zone = route53.HostedZone.fromLookup(this, 'Zone', { domainName: SITE_DOMAIN });
-    new cdk.CfnOutput(this, 'Site', { value: 'https://' + SITE_DOMAIN });
+    new cdk.CfnOutput(this, 'Site', { value: SITE_URL });
 
     // Content bucket
     const siteBucket = new s3.Bucket(this, 'SiteBucket', {
@@ -40,9 +43,10 @@ export class VortexStack extends cdk.Stack {
       validationDomains: {
         [SITE_DOMAIN]: SITE_DOMAIN,
         ['www.${SITE_DOMAIN}']: SITE_DOMAIN,
-        ['api.${SITE_DOMAIN}']: SITE_DOMAIN
+        ['api.${SITE_DOMAIN}']: SITE_DOMAIN,
       },
     }).certificateArn;
+    const certificate = acm.Certificate.fromCertificateArn(this, 'certificate', certificateArn);
     new cdk.CfnOutput(this, 'Certificate', { value: certificateArn });
 
     // Counters table
@@ -74,8 +78,8 @@ export class VortexStack extends cdk.Stack {
       code: lambda.Code.fromAsset('../vortex-server/build'),
       handler: 'handler.handler',
       environment: {
-        PUBLIC_URL: process.env.PUBLIC_URL || '',
-        SERVER_URL: process.env.SERVER_URL || '',
+        PUBLIC_URL: SITE_URL,
+        SERVER_URL: API_URL,
         JWT_SECRET: process.env.JWT_SECRET || '',
         GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID || '',
         GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET || '',
@@ -91,11 +95,16 @@ export class VortexStack extends cdk.Stack {
     counters.grantReadWriteData(lambdaHandler);
 
     // defines an API Gateway REST API resource backed by our app handler.
-    const api = new apigw.LambdaRestApi(this, 'Endpoint', {
+    const api = new apigw.LambdaRestApi(this, 'VortexServiceEndpoint', {
       handler: lambdaHandler,
       defaultCorsPreflightOptions: {
-        allowOrigins: ['http://localhost', 'https://vortex.run'],
+        allowOrigins: apigw.Cors.ALL_ORIGINS, // ['http://localhost', ],
         allowMethods: ['GET', 'PUT', 'POST'],
+      },
+      domainName: {
+        domainName: API_DOMAIN,
+        endpointType: apigw.EndpointType.REGIONAL,
+        certificate,
       },
     });
 
@@ -129,13 +138,6 @@ export class VortexStack extends cdk.Stack {
         },
       ],
     });
-
-    // distribution.
-
-    // distribution.addBehavior('/images/*.jpg', new origins.S3Origin(myBucket), {
-    //   viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-    // });
-
     new cdk.CfnOutput(this, 'DistributionId', { value: distribution.distributionId });
 
     // Route53 alias record for the CloudFront distribution
@@ -149,6 +151,13 @@ export class VortexStack extends cdk.Stack {
     new route53.CnameRecord(this, 'WWWSiteCnameRecord', {
       recordName: `www.${SITE_DOMAIN}`,
       domainName: SITE_DOMAIN,
+      zone,
+    });
+
+    // Route53 alias record for the API endpoint
+    new route53.ARecord(this, 'APISiteAliasRecord', {
+      recordName: API_DOMAIN,
+      target: route53.RecordTarget.fromAlias(new targets.ApiGateway(api)),
       zone,
     });
 

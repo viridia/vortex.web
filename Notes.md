@@ -1,5 +1,7 @@
 # TODO:
 
+* Graph Descriptions / Markdown
+* Top-level package and build scripts
 * Cloud storage:
   * List recent documents
   * Garbage collection for image references.
@@ -17,23 +19,22 @@
 * Upload JSON files
 * Undo / Redo
 * Log scale controls - shininess is a good example
+* PBR shader
 * Output type conversion - clean up and make consistent.
 * Enter key to close dialogs.
-* Possibly unify code for creating and editing connections - former uses DnD, latter uses mouse
-  events.
 
 * https://github.com/Jam3/glsl-fast-gaussian-blur
 
 # Operators to do:
   * Transforms:
     * Mirror
-    * Stitch / Cross-fade (used to blend images that aren't repeating)
   * Filters:
     * Combine
     * Emboss - simpler than illuminate.
     * Math
     * Bump Map
   * Generators:
+    * Square grid
     * Checker
     * Function
     * Tartan
