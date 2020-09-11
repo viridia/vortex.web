@@ -14,7 +14,7 @@ interface Props {
   children?: any;
   className?: string;
   open: boolean;
-  onClose: () => void;
+  onClose?: () => void;
   onExited?: () => void;
 }
 
@@ -101,7 +101,7 @@ const ModalElt = styled(DialogContent)`
   box-shadow: 0px 1px 8px 1px ${colors.modalShadow};
   border: 1px solid ${colors.modalBorder};
   min-width: 10rem;
-  min-height: 10rem;
+  min-height: 3rem;
   max-width: 95%;
   max-height: 95%;
   border-radius: 5px;

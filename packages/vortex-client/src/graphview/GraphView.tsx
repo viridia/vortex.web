@@ -1,4 +1,12 @@
-import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  FC,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useRef,
+  useLayoutEffect,
+} from 'react';
 import styled from '@emotion/styled';
 import { AbstractTerminal } from '../graph/AbstractTerminal';
 import { CompassRose } from '../controls/CompassRose';
@@ -14,7 +22,7 @@ import {
 import { ConnectionRendition } from './ConnectionRendition';
 import { NodeRendition } from './NodeRendition';
 import { action, runInAction } from 'mobx';
-import { colors } from '../styles';
+import { colors, roundedScrollbars } from '../styles';
 import { darken } from 'polished';
 import { isInputTerminal } from '../graph/InputTerminal';
 import { isOutputTerminal } from '../graph/OutputTerminal';
@@ -26,6 +34,7 @@ const graphDkBg = darken(0.02, colors.graphBg);
 type DragType = 'input' | 'output' | 'node' | null;
 
 const GraphElt = styled.section`
+  ${roundedScrollbars}
   position: relative;
   flex: 1;
   background-color: ${colors.graphBg};
@@ -54,24 +63,26 @@ const GraphElt = styled.section`
 `;
 
 const GVScroll = styled.div`
+  ${roundedScrollbars}
   position: absolute;
   left: 0;
   top: 0;
+  right: 0;
+  bottom: 0;
+  overflow: auto;
 `;
 
-const GVBackdrop = styled.section`
-  position: absolute;
+const GVScrollContent = styled.div`
+  position: 'absolute';
   left: 0;
   top: 0;
-  bottom: 0;
-  right: 0;
 `;
 
 interface Props {
   graph: Graph;
 }
 
-const useNodeDropTarget = (graph: Graph, xScroll: number, yScroll: number) => {
+const useNodeDropTarget = (graph: Graph) => {
   const [dropValid, setDropValid] = useState(false);
 
   // For dropping catalog items onto the canvas using drag/drop protocol.
@@ -98,18 +109,18 @@ const useNodeDropTarget = (graph: Graph, xScroll: number, yScroll: number) => {
       onDrop(e: React.DragEvent<HTMLDivElement>) {
         const data = e.dataTransfer.getData('application/x-vortex-operator');
         if (dropValid && data) {
-          const base = e.currentTarget;
           graph.clearSelection();
           const op = registry.get(data);
           const node = new GraphNode(op, graph.nextId());
-          node.x = quantize(e.clientX - base.offsetLeft - xScroll - 45);
-          node.y = quantize(e.clientY - base.offsetTop - yScroll - 60);
+          const rect = e.currentTarget.getBoundingClientRect();
+          node.x = quantize(e.clientX - rect.left + graph.bounds.xMin - 45);
+          node.y = quantize(e.clientY - rect.top + graph.bounds.yMin - 60);
           node.selected = true;
           graph.add(node);
         }
       },
     };
-  }, [graph, xScroll, yScroll, dropValid]);
+  }, [graph, dropValid]);
 };
 
 interface State {
@@ -123,7 +134,7 @@ interface State {
   dragSink: InputTerminal | null;
 }
 
-const useGraphDrag = (graph: Graph, xScroll: number, yScroll: number) => {
+const useGraphDrag = (graph: Graph) => {
   const [dragType, setDragType] = useState<DragType>(null);
   const [dxScroll, setDXScroll] = useState(0);
   const [dyScroll, setDYScroll] = useState(0);
@@ -160,7 +171,7 @@ const useGraphDrag = (graph: Graph, xScroll: number, yScroll: number) => {
   );
 
   const updateScrollVelocity = useCallback((e: React.PointerEvent) => {
-    const graphEl = e.currentTarget as HTMLElement;
+    const graphEl = e.currentTarget.parentElement?.parentElement as HTMLElement;
     let dxScroll = 0;
     if (e.clientX < graphEl.offsetLeft) {
       dxScroll = -1;
@@ -194,9 +205,10 @@ const useGraphDrag = (graph: Graph, xScroll: number, yScroll: number) => {
             }
           });
 
+          const rect = e.currentTarget.getBoundingClientRect();
           if (entity.selected) {
-            state.dragXOffset = e.clientX - entity.x - xScroll;
-            state.dragYOffset = e.clientY - entity.y - yScroll;
+            state.dragXOffset = e.clientX - rect.left - entity.x;
+            state.dragYOffset = e.clientY - rect.top - entity.y;
             state.dragNode = entity;
             state.pointerId = e.pointerId;
             e.currentTarget.setPointerCapture(e.pointerId);
@@ -204,8 +216,8 @@ const useGraphDrag = (graph: Graph, xScroll: number, yScroll: number) => {
           }
         } else if (entity instanceof AbstractTerminal) {
           const rect = e.currentTarget.getBoundingClientRect();
-          state.dragX = e.clientX - rect.left - xScroll;
-          state.dragY = e.clientY - rect.top - yScroll;
+          state.dragX = e.clientX - rect.left;
+          state.dragY = e.clientY - rect.top;
           setActiveTerminal(null);
           if (isOutputTerminal(entity)) {
             state.dragSource = entity;
@@ -235,29 +247,21 @@ const useGraphDrag = (graph: Graph, xScroll: number, yScroll: number) => {
         graph.clearSelection();
       }
     },
-    [state, graph, pickGraphEntity, xScroll, yScroll]
+    [state, graph, pickGraphEntity]
   );
 
   const onPointerMoveNode = useCallback(
     (e: React.PointerEvent) => {
-      const graphEl = e.currentTarget as HTMLElement;
+      const rect = e.currentTarget.getBoundingClientRect();
       runInAction(() => {
         if (state.dragNode) {
           state.dragNode.x = quantize(
-            Math.min(
-              graphEl.offsetLeft + graphEl.offsetWidth,
-              Math.max(graphEl.offsetLeft, e.clientX)
-            ) -
-              state.dragXOffset -
-              xScroll
+            e.clientX - rect.left - state.dragXOffset
+            // Math.min(rect.width, Math.max(0, e.clientX - rect.left)) - state.dragXOffset
           );
           state.dragNode.y = quantize(
-            Math.min(
-              graphEl.offsetTop + graphEl.offsetHeight,
-              Math.max(graphEl.offsetTop, e.clientY)
-            ) -
-              state.dragYOffset -
-              yScroll
+            e.clientY - rect.top - state.dragYOffset
+            // Math.min(rect.height, Math.max(0, e.clientY - rect.top)) - state.dragYOffset
           );
         }
         graph.modified = true;
@@ -265,14 +269,14 @@ const useGraphDrag = (graph: Graph, xScroll: number, yScroll: number) => {
 
       updateScrollVelocity(e);
     },
-    [graph, state, updateScrollVelocity, xScroll, yScroll]
+    [graph, state, updateScrollVelocity]
   );
 
   const onPointerMoveConnection = useCallback(
     (e: React.PointerEvent) => {
       const rect = e.currentTarget.getBoundingClientRect();
-      state.dragX = e.clientX - rect.left - xScroll;
-      state.dragY = e.clientY - rect.top - yScroll;
+      state.dragX = e.clientX - rect.left + graph.bounds.xMin;
+      state.dragY = e.clientY - rect.top + graph.bounds.yMin;
 
       const entity = pickGraphEntity(e.clientX, e.clientY);
       if (dragType === 'input') {
@@ -311,7 +315,7 @@ const useGraphDrag = (graph: Graph, xScroll: number, yScroll: number) => {
 
       updateScrollVelocity(e);
     },
-    [state, dragType, graph, pickGraphEntity, updateScrollVelocity, xScroll, yScroll]
+    [state, dragType, graph, pickGraphEntity, updateScrollVelocity]
   );
 
   const onPointerUp = useCallback(
@@ -339,6 +343,7 @@ const useGraphDrag = (graph: Graph, xScroll: number, yScroll: number) => {
       state.dragSource = null;
       state.dragSink = null;
       state.pointerId = -1;
+      graph.computeBounds();
     },
     [dragType, state, editConnection, graph]
   );
@@ -365,8 +370,8 @@ const useGraphDrag = (graph: Graph, xScroll: number, yScroll: number) => {
         const ds = (x - ts.x - ts.node.x - 10) ** 2 + (y - ts.y - ts.node.y - 10) ** 2;
 
         const rect = graphEl.getBoundingClientRect();
-        state.dragX = e.clientX - rect.left;
-        state.dragY = e.clientY - rect.top;
+        state.dragX = e.clientX - rect.left + graph.bounds.xMin;
+        state.dragY = e.clientY - rect.top + graph.bounds.yMin;
 
         if (ds > de) {
           state.dragSource = ts;
@@ -440,18 +445,18 @@ const useGraphDrag = (graph: Graph, xScroll: number, yScroll: number) => {
 
 export const GraphView: FC<Props> = observer(({ graph }) => {
   const scrollEl = useRef<HTMLDivElement>(null);
-  const [xScroll, setXScroll] = useState(0);
-  const [yScroll, setYScroll] = useState(0);
+  const scrollContentEl = useRef<HTMLDivElement>(null);
 
   const onScroll = useCallback(
     (dx: number, dy: number) => {
-      setXScroll(xScroll + dx);
-      setYScroll(yScroll + dy);
+      if (scrollEl.current) {
+        scrollEl.current.scrollBy(-dx, -dy);
+      }
     },
-    [xScroll, yScroll]
+    [scrollEl]
   );
 
-  const dndMethods = useNodeDropTarget(graph, xScroll, yScroll);
+  const dndMethods = useNodeDropTarget(graph);
   const {
     dragMethods,
     connMethods,
@@ -459,7 +464,7 @@ export const GraphView: FC<Props> = observer(({ graph }) => {
     editConnection,
     dxScroll,
     dyScroll,
-  } = useGraphDrag(graph, xScroll, yScroll);
+  } = useGraphDrag(graph);
 
   useEffect(() => {
     if (dxScroll !== 0 || dyScroll !== 0) {
@@ -470,6 +475,19 @@ export const GraphView: FC<Props> = observer(({ graph }) => {
       return () => window.clearInterval(timer);
     }
   }, [onScroll, dxScroll, dyScroll]);
+
+  const scrollToCenter = useCallback(() => {
+    if (scrollEl.current && scrollContentEl.current) {
+      const scrollRect = scrollEl.current.getBoundingClientRect();
+      const contentRect = scrollContentEl.current.getBoundingClientRect();
+      scrollEl.current.scrollTo(
+        (contentRect.width - scrollRect.width) / 2,
+        (contentRect.height - scrollRect.height) / 2
+      );
+    }
+  }, [scrollEl, scrollContentEl]);
+
+  useLayoutEffect(() => scrollToCenter(), [scrollToCenter]);
 
   const bounds = graph.bounds;
 
@@ -491,7 +509,6 @@ export const GraphView: FC<Props> = observer(({ graph }) => {
             key={`${node.id}_${output.id}_${input.node.id}_${input.id}`}
             ts={connection.source}
             te={connection.dest}
-            connection={connection}
           />
         );
       }
@@ -499,29 +516,42 @@ export const GraphView: FC<Props> = observer(({ graph }) => {
   }
 
   return (
-    <GraphElt {...dndMethods} {...dragMethods} id="graph">
-      <GVBackdrop className="backdrop" />
-      <GVScroll
-        ref={scrollEl}
-        className="scroll"
-        style={{ left: `${xScroll}px`, top: `${yScroll}px` }}
-      >
-        {graph.nodes.map(node => (
-          <NodeRendition key={node.id} node={node} graph={graph} onScroll={onScroll} />
-        ))}
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          style={{ position: 'absolute', left: `${bounds.xMin}px`, top: `${bounds.yMin}px` }}
-          viewBox={`${bounds.xMin} ${bounds.yMin} ${bounds.width} ${bounds.height}`}
-          className="connectors"
-          width={bounds.width}
-          height={bounds.height}
+    <GraphElt id="graph">
+      <GVScroll ref={scrollEl} className="scroll">
+        <div ref={scrollContentEl}
+          style={{
+            position: 'absolute',
+            left: '0',
+            top: '0',
+            width: `${bounds.width}px`,
+            height: `${bounds.height}px`,
+          }}
+        />
+        <GVScrollContent
+          {...dndMethods}
+          {...dragMethods}
+          style={{
+            width: `${bounds.width}px`,
+            height: `${bounds.height}px`,
+          }}
         >
-          {connections}
-          {dragConnection}
-        </svg>
+          {graph.nodes.map(node => (
+            <NodeRendition key={node.id} node={node} graph={graph} />
+          ))}
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            style={{ position: 'absolute', left: '0', top: '0' }}
+            viewBox={`${bounds.xMin} ${bounds.yMin} ${bounds.width} ${bounds.height}`}
+            className="connectors"
+            width={bounds.width}
+            height={bounds.height}
+          >
+            {connections}
+            {dragConnection}
+          </svg>
+        </GVScrollContent>
       </GVScroll>
-      <CompassRose onScroll={onScroll} />
+      <CompassRose onScroll={onScroll} onScrollToCenter={scrollToCenter} />
     </GraphElt>
   );
 });

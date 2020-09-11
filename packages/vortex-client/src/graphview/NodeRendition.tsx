@@ -17,7 +17,6 @@ const NodeElt = styled.div`
 const NodeBody = styled.div`
   position: relative;
   background: linear-gradient(to bottom, #fff 0%, #ccc 3%, #aaa 100%);
-  width: 100px;
   border-radius: 6px;
   border: 2px solid black;
   width: 90px;
@@ -46,14 +45,13 @@ const NodePreview = styled.section`
 interface Props {
   node: GraphNode;
   graph: Graph;
-  onScroll: (dx: number, dy: number) => void;
 }
 
 /** A visual representation of a node in the graph. */
 export const NodeRendition: FC<Props> = observer(({ node, graph }) => {
   const style = {
-    left: `${node.x}px`,
-    top: `${node.y}px`,
+    left: `${node.x - graph.bounds.xMin}px`,
+    top: `${node.y - graph.bounds.yMin}px`,
   };
 
   return (

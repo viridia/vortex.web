@@ -7,13 +7,16 @@ import { OutputTerminal } from './OutputTerminal';
 import { Terminal } from './Terminal';
 import { action, computed, observable } from 'mobx';
 
-const DOC_WIDTH = 4000;
+const DOC_WIDTH = 1024;
+const DOC_MARGIN = 256;
+const NODE_WIDTH = 94;
+const NODE_HEIGHT = 120;
 
 export class Graph {
   @observable public name: string = '';
   @observable public author: string = '';
   @observable.shallow public nodes: GraphNode[];
-  @observable public bounds: Bounds;
+  @observable.ref public bounds = new Bounds();
   @observable public modified: boolean = false;
   @observable public loaded: boolean = false;
   @observable public ownedByUser: boolean = false; // Doc is owned by current user
@@ -24,7 +27,7 @@ export class Graph {
 
   constructor() {
     this.nodes = [];
-    this.bounds = new Bounds(-DOC_WIDTH / 2, -DOC_WIDTH / 2, DOC_WIDTH / 2, DOC_WIDTH / 2);
+    this.computeBounds();
   }
 
   /** Add a node to the list. */
@@ -32,6 +35,7 @@ export class Graph {
   public add(node: GraphNode) {
     this.nodeCount = Math.max(this.nodeCount, node.id + 1);
     this.nodes.push(node);
+    this.computeBounds();
     this.modified = true;
   }
 
@@ -114,6 +118,15 @@ export class Graph {
     this.modified = true;
   }
 
+  @action computeBounds() {
+    const bounds = new Bounds(-DOC_WIDTH / 2, -DOC_WIDTH / 2, DOC_WIDTH, DOC_WIDTH);
+    this.nodes.forEach(node => {
+      bounds.unionWith(node.x - DOC_MARGIN, node.y - DOC_MARGIN);
+      bounds.unionWith(node.x + NODE_WIDTH + DOC_MARGIN, node.y + NODE_HEIGHT + DOC_MARGIN);
+    });
+    this.bounds = bounds;
+  }
+
   /** Return a list of all selected nodes. */
   @computed public get selection(): GraphNode[] {
     return this.nodes.filter(node => node.selected);
@@ -144,6 +157,7 @@ export class Graph {
     });
     // Delete all selected nodes
     this.nodes = this.nodes.filter(n => !n.selected);
+    this.computeBounds();
     this.modified = true;
   }
 
@@ -167,6 +181,7 @@ export class Graph {
       node.setDeleted();
     });
     this.nodes = [];
+    this.computeBounds();
     this.modified = true;
   }
 
@@ -261,6 +276,7 @@ export class Graph {
         connection.destination.terminal
       );
     });
+    this.computeBounds();
     this.modified = false;
   }
 }

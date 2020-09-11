@@ -19,6 +19,7 @@ import { axiosInstance } from './network';
 import { createBrowserHistory } from 'history';
 import { useShortcuts } from './hooks/useShortcuts';
 import 'mobx-react/batchingForReactDom';
+import { LoadingProgress } from './progress/LoadingProgress';
 
 // MobX strict mode
 configure({ enforceActions: 'observed' });
@@ -197,7 +198,9 @@ const App: FC = () => {
       localStorage.removeItem('workingGraph');
       history.push({ pathname: '/' });
     } else {
-      setGraph(new Graph());
+      const newGraph = new Graph();
+      newGraph.setLoaded();
+      setGraph(newGraph);
     }
   }, [history, docId]);
 
@@ -284,6 +287,7 @@ const App: FC = () => {
                   <PropertyPanel graph={graph} />
                   <ErrorDialog errorMsg={errorMessage} onClose={onCloseError} />
                 </AppBody>
+                <LoadingProgress graph={graph} />
               </RendererContext.Provider>
             </RegistryContext.Provider>
           </SessionContext.Provider>

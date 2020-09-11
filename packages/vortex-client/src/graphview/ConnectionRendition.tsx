@@ -36,7 +36,6 @@ interface Props {
   xe?: number;
   ye?: number;
   pending?: boolean;
-  connection?: Connection;
   onPointerDown?: (e: React.PointerEvent<SVGElement>) => void;
   onEdit?: (conn: Connection, output: boolean) => void;
 }

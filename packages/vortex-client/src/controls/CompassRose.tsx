@@ -3,8 +3,6 @@ import styled from '@emotion/styled';
 import { FC, useMemo } from 'react';
 import { MomentaryButton } from './MomentaryButton';
 
-// import './CompassRose.scss';
-
 const arrowWidth = '24px';
 const compassWidth = '90px';
 const centerWidth = '16px';
@@ -71,9 +69,11 @@ const CompassRoseDiv = styled.div`
     height: ${centerWidth};
     background-color: white;
     border-radius: 50%;
+    border: none;
     left: calc((${compassWidth} - ${centerWidth}) / 2);
     top: calc((${compassWidth} - ${centerWidth}) / 2);
     opacity: 0.3;
+    outline: none;
 
     &:hover {
       opacity: 0.6;
@@ -87,25 +87,26 @@ const CompassRoseDiv = styled.div`
 
 interface Props {
   onScroll: (dx: number, dy: number) => void;
+  onScrollToCenter: () => void;
 }
 
-export const CompassRose: FC<Props> = ({ onScroll }) => {
+export const CompassRose: FC<Props> = ({ onScroll, onScrollToCenter }) => {
   const callbacks = useMemo(() => {
     return {
-      north: () => onScroll(0, 10),
-      east: () => onScroll(-10, 0),
-      south: () => onScroll(0, -10),
-      west: () => onScroll(10, 0),
+      north: () => onScroll(0, 2),
+      east: () => onScroll(-2, 0),
+      south: () => onScroll(0, -2),
+      west: () => onScroll(2, 0),
     };
   }, [onScroll]);
 
   return (
     <CompassRoseDiv className="compass-rose">
-      <MomentaryButton className="arrow north" delay={0} onHeld={callbacks.north} />
-      <MomentaryButton className="arrow east" delay={0} onHeld={callbacks.east} />
-      <MomentaryButton className="arrow south" delay={0} onHeld={callbacks.south} />
-      <MomentaryButton className="arrow west" delay={0} onHeld={callbacks.west} />
-      <MomentaryButton className="center" />
+      <MomentaryButton className="arrow north" period={5} delay={0} onHeld={callbacks.north} />
+      <MomentaryButton className="arrow east" period={5} delay={0} onHeld={callbacks.east} />
+      <MomentaryButton className="arrow south" period={5} delay={0} onHeld={callbacks.south} />
+      <MomentaryButton className="arrow west" period={5} delay={0} onHeld={callbacks.west} />
+      <button className="center" onClick={onScrollToCenter} />
     </CompassRoseDiv>
   );
 };

@@ -4,6 +4,9 @@ import { DataType } from '../operators';
 import { GLResources } from './GLResources';
 import { GraphNode } from '../graph';
 import { createContext } from 'react';
+// import { observable, action } from 'mobx';
+
+type RenderTaskState = 'running' | 'finishing' | 'stopped';
 
 const vertexShaderSource = glsl`
 #version 300 es
@@ -27,6 +30,7 @@ export class Renderer {
   private frameBuffer: WebGLFramebuffer;
   private nextTextureUnit: number;
   private invertY = false;
+  private taskState: RenderTaskState = 'stopped';
 
   constructor() {
     this.canvas = document.createElement('canvas');
@@ -48,6 +52,10 @@ export class Renderer {
     this.nextTextureUnit = 0;
   }
 
+  public get busy() {
+    return this.taskState !== 'stopped';
+  }
+
   public setTiling(tiling: number) {
     this.tiling = tiling;
   }
@@ -58,6 +66,7 @@ export class Renderer {
     height: number,
     out: CanvasRenderingContext2D
   ) {
+    // this.taskState = 'running';
     const shaderSource = node.source;
     this.canvas.width = width;
     this.canvas.height = height;
@@ -90,6 +99,7 @@ export class Renderer {
     }
     this.renderNode(node);
     out.drawImage(this.canvas, 0, 0);
+    this.taskState = 'stopped';
   }
 
   // Render a node to a texture buffer, used by nodes that have buffered inputs.

@@ -45,7 +45,7 @@ export class Bounds {
     return (b.xMax > this.xMin && b.xMin < this.xMax && b.yMax > this.yMin && b.yMin <= this.yMax);
   }
 
-  /** Expand this bound to include another. */
+  /** Expand this bound to include a point. */
   public unionWith(x: number, y: number): this {
     this.xMin = Math.min(this.xMin, x);
     this.xMax = Math.max(this.xMax, x);
