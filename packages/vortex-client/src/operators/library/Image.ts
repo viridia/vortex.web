@@ -30,10 +30,10 @@ class Image extends Operator {
   }
 
   public getCode(node: GraphNode): ExprNode {
-    if (!node.getInputTerminal('in').connection) {
-      return literal('vec4(0.0, 0.0, 0.0, 0.0)', DataType.VEC4);
+    if (node.paramValues.has('image')) {
+      return texture(refUniform('image', DataType.IMAGE, node), refTexCoords());
     }
-    return texture(refUniform('image', DataType.IMAGE, node), refTexCoords());
+    return literal('vec4(0.0, 0.0, 0.0, 0.0)', DataType.VEC4);
   }
 
   // public readOutputValue(assembly: ShaderAssembly, node: GraphNode, out: string, uv: Expr): Expr {

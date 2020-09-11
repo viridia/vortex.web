@@ -28,7 +28,6 @@ export class VortexStack extends cdk.Stack {
     const siteBucket = new s3.Bucket(this, 'SiteBucket', {
       bucketName: SITE_DOMAIN,
       websiteIndexDocument: 'index.html',
-      // websiteErrorDocument: 'error.html',
       publicReadAccess: true,
       removalPolicy: cdk.RemovalPolicy.DESTROY, // NOT recommended for production code
     });
@@ -72,7 +71,22 @@ export class VortexStack extends cdk.Stack {
       writeCapacity: 10,
     });
 
-    // Express handelr
+    // Bucket for storing uploaded images
+    const imagesBucket = new s3.Bucket(this, 'VortexImagesBucket', {
+      bucketName: 'vortex-image-uploads',
+      publicReadAccess: true,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+      cors: [
+        {
+          allowedMethods: [s3.HttpMethods.GET],
+          allowedOrigins: apigw.Cors.ALL_ORIGINS,
+        },
+      ],
+    });
+    new cdk.CfnOutput(this, 'ImagesBucket', { value: imagesBucket.bucketName });
+
+    // https://vortex-image-uploads.s3.amazonaws.com/bw00hul
+    // Express request handler
     const lambdaHandler = new lambda.Function(this, 'VortexServiceHandler', {
       runtime: lambda.Runtime.NODEJS_10_X,
       code: lambda.Code.fromAsset('../vortex-server/build'),
@@ -80,6 +94,7 @@ export class VortexStack extends cdk.Stack {
       environment: {
         PUBLIC_URL: SITE_URL,
         SERVER_URL: API_URL,
+        UPLOADS_TMP_DIR: '/tmp/vortex',
         JWT_SECRET: process.env.JWT_SECRET || '',
         GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID || '',
         GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET || '',
@@ -87,12 +102,14 @@ export class VortexStack extends cdk.Stack {
         GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || '',
         AWS_DDB_TABLE_DOCUMENTS: documents.tableName,
         AWS_DDB_TABLE_COUNTERS: counters.tableName,
+        STORAGE_BUCKET_IMAGES: imagesBucket.bucketName,
       },
     });
 
     // Grant permissions needed.
     documents.grantReadWriteData(lambdaHandler);
     counters.grantReadWriteData(lambdaHandler);
+    imagesBucket.grantReadWrite(lambdaHandler);
 
     // defines an API Gateway REST API resource backed by our app handler.
     const api = new apigw.LambdaRestApi(this, 'VortexServiceEndpoint', {

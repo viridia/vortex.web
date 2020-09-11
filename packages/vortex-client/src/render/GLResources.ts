@@ -1,10 +1,12 @@
+import { ObservableMap } from "mobx";
+
 /** Object that tracks the allocated GL resources (shaders, buffers, etc.) that are alloccated
     by a node.
 */
 export class GLResources {
   public program: WebGLProgram | null = null;
   public fragment: WebGLShader | null = null;
-  public textures: Map<string, WebGLTexture> = new Map<string, WebGLTexture>();
+  public textures = new ObservableMap<string, WebGLTexture>();
 
   private textureIndex: number = 0;
 

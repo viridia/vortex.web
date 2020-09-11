@@ -4,9 +4,8 @@
 * Top-level package and build scripts
 * Cloud storage:
   * List recent documents
-  * Garbage collection for image references.
-  * Make a local store option for images (probably regrid)
-  * Don't require login for local storage
+  * Garbage collection for image references. (Good idea!)
+  * Make a local store option for images
   * Admin panel for user count, resource usage
 * Type conversions for node outputs
   * UV not fully supported

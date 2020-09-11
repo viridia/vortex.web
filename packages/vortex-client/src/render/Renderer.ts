@@ -272,7 +272,7 @@ export class Renderer {
           break;
         }
         case DataType.IMAGE: {
-          if (value) {
+          if (value && node.glResources?.textures.has(param.id)) {
             this.bindTexture(program, node.getTexture(param.id), uniformName);
           } else {
             this.bindTexture(program, undefined, uniformName);

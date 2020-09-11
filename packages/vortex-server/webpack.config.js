@@ -2,6 +2,7 @@ const path = require('path');
 
 const config = {
   mode: 'production',
+  devtool: 'source-map',
   entry: {
     handler: path.resolve(__dirname, 'src/lambda.ts'),
   },

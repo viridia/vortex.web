@@ -5,14 +5,14 @@ import { addAuthRoutes } from './routes/auth';
 import { addDocRoutes } from './routes/documents';
 import { addErrorRoutes } from './routes/errors';
 import { app } from './app';
+import { ImageStoreS3 } from './db/ImageStoreS3';
+import { addImageRoutes } from './routes/images';
+import 'source-map-support/register';
 
 addAuthRoutes(app);
 addDocRoutes(app, new DocumentStoreDynamoDB());
+addImageRoutes(app, new ImageStoreS3());
 addErrorRoutes(app);
-
-// if (process.env.STORAGE_BUCKET_IMAGES) {
-//   imageStore = new S3Store();
-// }
 
 const server = awsServerlessExpress.createServer(app);
 

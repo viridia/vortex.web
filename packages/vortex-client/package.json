@@ -18,6 +18,7 @@
   },
   "scripts": {
     "start": "REACT_APP_LOCAL=true react-scripts start",
+    "start-local": "SERVER_URL=http://localhost:9001/ REACT_APP_LOCAL=true react-scripts start",
     "build": "react-scripts build",
     "lint": "eslint --ext .ts --ext .tsx ./src",
     "test": "react-scripts test",
@@ -58,7 +59,6 @@
       "last 1 safari version"
     ]
   },
-  "proxy": "https://a2ytko8bw9.execute-api.us-east-1.amazonaws.com/prod/",
   "dependencies": {
     "@emotion/core": "^10.0.35",
     "@emotion/styled": "^10.0.27",
@@ -88,16 +88,17 @@
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.5.0",
     "@testing-library/user-event": "^7.2.1",
-    "@types/jest": "^24.9.1",
-    "@types/react": "^16.9.46",
-    "@types/react-dom": "^16.9.8",
     "@types/classnames": "^2.2.10",
     "@types/dateformat": "^3.0.1",
     "@types/downloadjs": "^1.4.2",
+    "@types/jest": "^24.9.1",
     "@types/marked": "^1.1.0",
     "@types/node": "^12.12.54",
     "@types/qs": "^6.9.4",
+    "@types/react": "^16.9.46",
+    "@types/react-dom": "^16.9.8",
     "@types/webpack-env": "^1.15.2",
-    "eslint-plugin-sort-imports-es6-autofix": "^0.5.0"
+    "eslint-plugin-sort-imports-es6-autofix": "^0.5.0",
+    "http-proxy-middleware": "^1.0.5"
   }
 }

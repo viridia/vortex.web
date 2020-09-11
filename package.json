@@ -1,0 +1,27 @@
+{
+  "name": "vortex",
+  "version": "2.0.0",
+  "description": "WebGL-based texture generator.",
+  "directories": {
+    "doc": "doc"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/viridia/vortex.git"
+  },
+  "keywords": [
+    "WebGL",
+    "texture",
+    "generator",
+    "GLSL"
+  ],
+  "author": "Talin",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/viridia/vortex/issues"
+  },
+  "homepage": "https://github.com/viridia/vortex#readme"
+}
