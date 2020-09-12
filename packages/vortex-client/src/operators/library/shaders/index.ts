@@ -2,6 +2,7 @@ import blend from './blend.glsl';
 import blur from './blur.glsl';
 import bricks from './bricks.glsl';
 import cellular from './cellular.glsl';
+import cellularHex from './cellular_hex.glsl';
 import colorAdjust from './color-adjust.glsl';
 import crossfade from './crossfade.glsl';
 import gradient from './gradient.glsl';
@@ -25,6 +26,7 @@ export const byName: { [name: string]: string } = {
   blur,
   bricks,
   cellular,
+  cellular_hex: cellularHex,
   'color-adjust': colorAdjust,
   crossfade,
   'gradient-color': gradientColor,

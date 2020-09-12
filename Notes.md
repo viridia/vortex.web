@@ -1,6 +1,8 @@
 # TODO:
 
-* Graph Descriptions / Markdown
+* Buggy gradient editor
+* MobX Exception in renderer (set texture)
+* Calling noise twice.
 * Top-level package and build scripts
 * Cloud storage:
   * List recent documents
@@ -21,6 +23,8 @@
 * PBR shader
 * Output type conversion - clean up and make consistent.
 * Enter key to close dialogs.
+* Graph Descriptions / Markdown
+* Bug in blur, chooses incorrect texture inputs when used upstream.
 
 * https://github.com/Jam3/glsl-fast-gaussian-blur
 
@@ -64,3 +68,6 @@
 * Patterns:
   * Square grid
   * Tartan
+  * Hex worley
+  * Custom shader editor!!
+    * We'll need an expansion button for side panel to make it wider.
