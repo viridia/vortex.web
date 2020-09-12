@@ -6,7 +6,7 @@ import { ColorStopDragger } from './ColorStopDragger';
 import { ComboSlider } from './ComboSlider';
 import { DragState, usePointerDrag } from '../hooks/usePointerDrag2';
 import { colors } from '../styles';
-import { observer, useLocalStore } from 'mobx-react';
+import { observer } from 'mobx-react';
 import { runInAction } from 'mobx';
 import { useShortcuts } from '../hooks/useShortcuts';
 
@@ -54,17 +54,6 @@ export const ColorGradientEditor: FC<Props> = observer(({ caption, value: gradie
   const [gradientElt, setGradientElt] = useState<HTMLDivElement | null>(null);
   const [position, setPosition] = useState(0);
   const [selected, setSelected] = useState(-1);
-  const store = useLocalStore(() => ({
-    get gradientFill() {
-      if (gradient.length === 0) {
-        return undefined;
-      }
-      const colorStops = gradient.map(
-        ({ value, position }) => `${formatRGBAColor(value)} ${Math.round(position * 1000) / 10}%`
-      );
-      return `linear-gradient(to right, ${colorStops.join(', ')})`;
-    },
-  }));
 
   const getTargetStopIndex = useCallback(
     (elt: HTMLElement): number => {
@@ -122,7 +111,7 @@ export const ColorGradientEditor: FC<Props> = observer(({ caption, value: gradie
         setSelected(-1);
       });
     }
-  }, [getTargetStopIndex, gradient, selected]);
+  }, [gradient, selected]);
 
   useShortcuts(
     {
@@ -194,6 +183,10 @@ export const ColorGradientEditor: FC<Props> = observer(({ caption, value: gradie
     [gradient, onChange, selected]
   );
 
+  const gradientFill = `linear-gradient(to right, ${gradient
+    .map(({ value, position }) => `${formatRGBAColor(value)} ${Math.round(position * 1000) / 10}%`)
+    .join(', ')})`;
+
   return (
     <ColorGradientEditorElt className="color-gradient-editor">
       <ColorStops className="color-stops property-group">
@@ -201,7 +194,7 @@ export const ColorGradientEditor: FC<Props> = observer(({ caption, value: gradie
         <ColorStopsGradient
           {...pointerMethods}
           className="gradient"
-          style={{ backgroundImage: store.gradientFill }}
+          style={{ backgroundImage: gradientFill }}
           ref={setGradientElt}
           onDoubleClick={onDoubleClick}
         >
