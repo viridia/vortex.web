@@ -1,12 +1,12 @@
 import { Connection } from './Connection';
 import { DataType, Operator, Parameter } from '../operators';
-import { ExprNode } from '../render/ExprNode';
+import { Expr } from '../render/Expr';
 import { GLResources } from '../render/GLResources';
 import { InputTerminal } from './InputTerminal';
 import { ObservableMap, computed, observable } from 'mobx';
 import { OutputTerminal } from './OutputTerminal';
 import { Renderer } from '../render/Renderer';
-import { ShaderGenerator } from '../render/ShaderGenerator';
+import { ShaderAssembly } from '../render/ShaderAssembly';
 import { Terminal } from './Terminal';
 import { equalSet } from '../lib/comparators';
 import { glType } from '../operators/DataType';
@@ -35,7 +35,7 @@ export class GraphNode {
   public glResources: GLResources | undefined;
   public prevSource: string = '';
 
-  private generator: ShaderGenerator;
+  private generator: ShaderAssembly;
 
   constructor(
     // Defines what this node does.
@@ -61,7 +61,7 @@ export class GraphNode {
       });
     }
 
-    this.generator = new ShaderGenerator(this);
+    this.generator = new ShaderAssembly(this);
   }
 
   // The human-readable name of this node.
@@ -222,7 +222,7 @@ export class GraphNode {
 
   /** Return an expression graph represneting this node's output. */
   @computed
-  public get outputCode(): ExprNode {
+  public get outputCode(): Expr {
     return this.operator.getCode(this);
   }
 

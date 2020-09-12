@@ -1,5 +1,5 @@
 import { DataType, Operator, Output, Parameter } from '..';
-import { ExprNode, refUniform } from '../../render/ExprNode';
+import { Expr, refUniform } from '../../render/Expr';
 import { GraphNode } from '../../graph';
 
 class ConstantColor extends Operator {
@@ -27,7 +27,7 @@ A constant color.
     super('generator', 'Constant Color', 'gen_constant_color');
   }
 
-  public getCode(node: GraphNode): ExprNode {
+  public getCode(node: GraphNode): Expr {
     return refUniform('color', DataType.VEC4, node);
   }
 }

@@ -1,5 +1,5 @@
 import { DataType, Input, Operator, Output, Parameter } from '..';
-import { ExprNode, defineFn, refInput, refTexCoords, refUniform } from '../../render/ExprNode';
+import { Expr, defineFn, refInput, refTexCoords, refUniform } from '../../render/Expr';
 import { GraphNode } from '../../graph';
 
 const IMPORTS = new Set(['gradient-color']);
@@ -54,7 +54,7 @@ class Colorizer extends Operator {
     return IMPORTS;
   }
 
-  public getCode(node: GraphNode): ExprNode {
+  public getCode(node: GraphNode): Expr {
     return gradientColor(
       refInput('in', DataType.FLOAT, node, refTexCoords()),
       refUniform('color_colors', DataType.VEC4_ARRAY, node),

@@ -1,12 +1,12 @@
 import { DataType, Input, Operator, Output, Parameter } from '..';
 import {
-  ExprNode,
+  Expr,
   defineFn,
   fork,
   refInput,
   refTexCoords,
   refUniform,
-} from '../../render/ExprNode';
+} from '../../render/Expr';
 import { GraphNode } from '../../graph';
 
 const IMPORTS = new Set(['illuminate']);
@@ -121,7 +121,7 @@ Illuminate the input texture.
     return IMPORTS;
   }
 
-  public getCode(node: GraphNode): ExprNode {
+  public getCode(node: GraphNode): Expr {
     const tuv = fork(refTexCoords(), 'uv');
     return illuminate(
       refInput('in', DataType.VEC4, node, tuv),

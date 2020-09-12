@@ -1,12 +1,12 @@
 import { DataType, Input, Operator, Output, Parameter } from '..';
 import {
-  ExprNode,
+  Expr,
   defineFn,
   fork,
   refInput,
   refTexCoords,
   refUniform,
-} from '../../render/ExprNode';
+} from '../../render/Expr';
 import { GraphNode } from '../../graph';
 
 const IMPORTS = new Set(['blend']);
@@ -91,7 +91,7 @@ Blends two source images, similar to layer operations in GIMP or PhotoShop.
     return IMPORTS;
   }
 
-  public getCode(node: GraphNode): ExprNode {
+  public getCode(node: GraphNode): Expr {
     const tuv = fork(refTexCoords(), 'uv');
     return blend(
         refInput('a', DataType.VEC4, node, tuv),

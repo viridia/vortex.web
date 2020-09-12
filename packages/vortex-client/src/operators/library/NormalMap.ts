@@ -1,6 +1,6 @@
 import { DataType, Input, Operator, Output, Parameter } from '..';
 import {
-  ExprNode,
+  Expr,
   add,
   defineFn,
   divide,
@@ -11,7 +11,7 @@ import {
   refInput,
   refTexCoords,
   refUniform,
-} from '../../render/ExprNode';
+} from '../../render/Expr';
 import { GraphNode } from '../../graph';
 import { cross_3, normalize_3, vec3_2_1, vec4_3_1 } from '../../render/glIntrinsics';
 
@@ -60,7 +60,7 @@ class NormalMap extends Operator {
 Treating the grayscale input as a height map, computes normals.
 `;
 
-  public getCode(node: GraphNode): ExprNode {
+  public getCode(node: GraphNode): Expr {
     const scale = refUniform('scale', DataType.FLOAT, node);
     const uv = fork(refTexCoords(), 'uv');
     const t = fork(refInput('in', DataType.VEC4, node, uv), 't');

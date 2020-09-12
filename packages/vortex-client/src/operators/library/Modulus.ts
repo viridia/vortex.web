@@ -1,5 +1,5 @@
 import { DataType, Input, Operator, Output, Parameter } from '..';
-import { ExprNode, defineFn, refInput, refTexCoords, refUniform } from '../../render/ExprNode';
+import { Expr, defineFn, refInput, refTexCoords, refUniform } from '../../render/Expr';
 import { GraphNode } from '../../graph';
 
 const IMPORTS = new Set(['modulus']);
@@ -72,7 +72,7 @@ converted into a sequence of sawtooth waves.
     return IMPORTS;
   }
 
-  public getCode(node: GraphNode): ExprNode {
+  public getCode(node: GraphNode): Expr {
     return modulus(
       refInput('input', DataType.FLOAT, node, refTexCoords()),
       ...this.params.map(param => refUniform(param.id, param.type, node))

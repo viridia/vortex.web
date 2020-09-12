@@ -1,5 +1,5 @@
 import { DataType, Operator, Output, Parameter } from '..';
-import { ExprNode, defineFn, refTexCoords, refUniform } from '../../render/ExprNode';
+import { Expr, defineFn, refTexCoords, refUniform } from '../../render/Expr';
 import { GraphNode } from '../../graph';
 
 const IMPORTS = new Set(['steppers', 'permute', 'pnoise', 'periodic-noise2']);
@@ -94,7 +94,7 @@ Generates a periodic Perlin noise texture.
     super('generator', 'Perlin Noise', 'gen_noise');
   }
 
-  public getCode(node: GraphNode): ExprNode {
+  public getCode(node: GraphNode): Expr {
     return noise2(
       refTexCoords(),
       ...this.params.map(param => refUniform(param.id, param.type, node))

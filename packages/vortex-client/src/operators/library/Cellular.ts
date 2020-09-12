@@ -1,5 +1,5 @@
 import { DataType, Operator, Output, Parameter } from '..';
-import { ExprNode, defineFn, refTexCoords, refUniform } from '../../render/ExprNode';
+import { Expr, defineFn, refTexCoords, refUniform } from '../../render/Expr';
 import { GraphNode } from '../../graph';
 
 const IMPORTS = new Set(['permute', 'pworley', 'cellular']);
@@ -106,7 +106,7 @@ Generates a periodic Worley noise texture.
     return IMPORTS;
   }
 
-  public getCode(node: GraphNode): ExprNode {
+  public getCode(node: GraphNode): Expr {
     return cellular(
       refTexCoords(),
       ...this.params.map(param => refUniform(param.id, param.type, node))

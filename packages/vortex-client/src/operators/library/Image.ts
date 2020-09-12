@@ -1,5 +1,5 @@
 import { DataType, Operator, Output, Parameter } from '..';
-import { ExprNode, defineFn, literal, refTexCoords, refUniform } from '../../render/ExprNode';
+import { Expr, defineFn, literal, refTexCoords, refUniform } from '../../render/Expr';
 import { GraphNode } from '../../graph';
 
 export const texture = defineFn({
@@ -29,7 +29,7 @@ class Image extends Operator {
     super('pattern', 'Image', 'pattern_image');
   }
 
-  public getCode(node: GraphNode): ExprNode {
+  public getCode(node: GraphNode): Expr {
     if (node.paramValues.has('image')) {
       return texture(refUniform('image', DataType.IMAGE, node), refTexCoords());
     }

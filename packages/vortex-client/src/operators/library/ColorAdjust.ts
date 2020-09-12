@@ -1,5 +1,5 @@
 import { DataType, Input, Operator, Output, Parameter } from '..';
-import { ExprNode, defineFn, refInput, refTexCoords, refUniform } from '../../render/ExprNode';
+import { Expr, defineFn, refInput, refTexCoords, refUniform } from '../../render/Expr';
 import { GraphNode } from '../../graph';
 
 const IMPORTS = new Set(['hsv', 'color-adjust']);
@@ -74,7 +74,7 @@ class ColorAdjust extends Operator {
     return IMPORTS;
   }
 
-  public getCode(node: GraphNode): ExprNode {
+  public getCode(node: GraphNode): Expr {
     return colorAdjust(
       refInput('in', DataType.VEC4, node, refTexCoords()),
       ...this.params.map(param => refUniform(param.id, param.type, node))

@@ -1,5 +1,5 @@
 import { DataType, Input, Operator, Output, Parameter } from '..';
-import { ExprNode, defineFn, literal, refTexCoords, refUniform } from '../../render/ExprNode';
+import { Expr, defineFn, literal, refTexCoords, refUniform } from '../../render/Expr';
 import { GraphNode } from '../../graph';
 
 const IMPORTS = new Set(['crossfade']);
@@ -57,7 +57,7 @@ class CrossFade extends Operator {
     return IMPORTS;
   }
 
-  public getCode(node: GraphNode): ExprNode {
+  public getCode(node: GraphNode): Expr {
     if (!node.getInputTerminal('in').connection) {
       return literal('vec4(0.0, 0.0, 0.0, 0.0)', DataType.VEC4);
     }

@@ -1,22 +1,22 @@
 import { CodeGen, StringChunk } from './CodeGen';
 import { DataType } from '../operators';
 import {
-  ExprNode,
+  Expr,
   LiteralNode,
   assign,
   castIfNeeded,
   defLocal,
   literal,
   refLocal,
-} from './ExprNode';
+} from './Expr';
 import { GraphNode } from '../graph';
 import { byName } from '../operators/library/shaders';
 
 const MAX_COLS = 80;
 
 /** Observer that regenerates a shader when the inputs change. */
-export class ShaderGenerator {
-  private textureCoords: ExprNode = literal('vTextureCoord', DataType.VEC2);
+export class ShaderAssembly {
+  private textureCoords: Expr = literal('vTextureCoord', DataType.VEC2);
 
   constructor(private node: GraphNode) {}
 
@@ -80,7 +80,7 @@ export class ShaderGenerator {
     const result = this.node.outputCode;
 
     // Transform expessions
-    const stmts: ExprNode[] = [];
+    const stmts: Expr[] = [];
     this.transform(assign(refLocal('outputColor', DataType.VEC4), result), stmts);
 
     // Convert to array of strings.
@@ -95,11 +95,11 @@ export class ShaderGenerator {
   }
 
   /** Transform the expression graph, substituting texture coordinates and node inputs. */
-  private transform(expr: ExprNode, out: ExprNode[]): void {
+  private transform(expr: Expr, out: Expr[]): void {
     let tmpVarIndex = 1;
-    const tmpVarMap = new Map<Symbol, ExprNode>();
+    const tmpVarMap = new Map<Symbol, Expr>();
 
-    const visit = (expr: ExprNode): ExprNode => {
+    const visit = (expr: Expr): Expr => {
       switch (expr.kind) {
         case 'assign': {
           const left = visit(expr.left);
@@ -230,7 +230,7 @@ export class ShaderGenerator {
   }
 }
 
-function isSimpleExpr(expr: ExprNode): boolean {
+function isSimpleExpr(expr: Expr): boolean {
   switch (expr.kind) {
     case 'reflocal':
     case 'refuniform':

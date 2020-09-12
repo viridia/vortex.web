@@ -1,5 +1,5 @@
 import { DataType, Operator, Output, Parameter } from '..';
-import { ExprNode, defineFn, refTexCoords, refUniform } from '../../render/ExprNode';
+import { Expr, defineFn, refTexCoords, refUniform } from '../../render/Expr';
 import { GraphNode } from '../../graph';
 
 const IMPORTS = new Set(['waves']);
@@ -153,7 +153,7 @@ Sums together up to three wave generators.
     return IMPORTS;
   }
 
-  public getCode(node: GraphNode): ExprNode {
+  public getCode(node: GraphNode): Expr {
     return waves(
       refTexCoords(),
       refUniform('fx0', DataType.INTEGER, node),

@@ -1,6 +1,7 @@
 # TODO:
 
-* Buggy gradient editor
+* Bug with buffered connections, shows wrong image.
+  * Blur chooses incorrect texture inputs when used upstream.
 * MobX Exception in renderer (set texture)
 * Calling noise twice.
 * Top-level package and build scripts
@@ -8,6 +9,7 @@
   * List recent documents
   * Garbage collection for image references. (Good idea!)
   * Make a local store option for images
+    * Avoids need to upload everything to cloud.
   * Admin panel for user count, resource usage
 * Type conversions for node outputs
   * UV not fully supported
@@ -24,7 +26,6 @@
 * Output type conversion - clean up and make consistent.
 * Enter key to close dialogs.
 * Graph Descriptions / Markdown
-* Bug in blur, chooses incorrect texture inputs when used upstream.
 
 * https://github.com/Jam3/glsl-fast-gaussian-blur
 
@@ -61,13 +62,33 @@
 * Better line breaking
 * Need a better method for writing shader expressions than manual Expression trees.
 * Show terminal data types
-* Ramp operator
-* Constant Float operator
-* Scroll-dragging
-* Rename Exprs
+* Show connection data types (float, vec2, vec3, buffered)
+* Rename Exprs package
 * Patterns:
+  * Constant Float operator
+    * Probably shouldn't have a preview window.
+    * This means we need different size nodes, which is something we should probably have anyway.
+  * Ramp generator
+  * 1d curve
   * Square grid
   * Tartan
-  * Hex worley
+  * Split RGBA
+  * Combine RGBA
   * Custom shader editor!!
     * We'll need an expansion button for side panel to make it wider.
+
+* Function Curve
+  * Curve type
+    * Constant
+    * Linear
+    * Bezier
+  * Control point
+    * position: x-coord
+    * value: y-coord
+    * type: 'aligned' | 'free' |
+    * (incoming, outgoing) handle:
+      * dPosition
+      * dValue
+  * Double-click to insert control point
+  * Double-click again to delete control point
+  * Select control point

@@ -1,13 +1,13 @@
 import { DataType, Input, Operator, Output, Parameter } from '..';
 import {
-  ExprNode,
+  Expr,
   fork,
   getAttr,
   multiply,
   refInput,
   refTexCoords,
   refUniform,
-} from '../../render/ExprNode';
+} from '../../render/Expr';
 import { GraphNode } from '../../graph';
 import { fract, vec2 } from '../../render/glIntrinsics';
 
@@ -51,7 +51,7 @@ class Repeat extends Operator {
     super('transform', 'Repeat', 'transform_repeat');
   }
 
-  public getCode(node: GraphNode): ExprNode {
+  public getCode(node: GraphNode): Expr {
     const tuv = fork(refTexCoords(), 'uv');
     const countX = refUniform('count_x', DataType.INTEGER, node);
     const countY = refUniform('count_y', DataType.INTEGER, node);

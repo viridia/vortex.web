@@ -1,5 +1,5 @@
 import { DataType, Operator, Output, Parameter } from '..';
-import { ExprNode, defineFn, refTexCoords, refUniform } from '../../render/ExprNode';
+import { Expr, defineFn, refTexCoords, refUniform } from '../../render/Expr';
 import { GraphNode } from '../../graph';
 
 const IMPORTS = new Set(['steppers', 'triangles']);
@@ -116,7 +116,7 @@ Generates a triangular grid pattern.
     return IMPORTS;
   }
 
-  public getCode(node: GraphNode): ExprNode {
+  public getCode(node: GraphNode): Expr {
     return triangles(
       refTexCoords(),
       ...this.params.map(param => refUniform(param.id, param.type, node))

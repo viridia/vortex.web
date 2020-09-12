@@ -1,6 +1,6 @@
 import { DataType, Input, Operator, Output, Parameter } from '..';
 import {
-  ExprNode,
+  Expr,
   add,
   fork,
   getAttr,
@@ -10,7 +10,7 @@ import {
   refTexCoords,
   refUniform,
   subtract,
-} from '../../render/ExprNode';
+} from '../../render/Expr';
 import { GraphNode } from '../../graph';
 
 class Warp extends Operator {
@@ -52,7 +52,7 @@ class Warp extends Operator {
     super('transform', 'Warp', 'transform_warp');
   }
 
-  public getCode(node: GraphNode): ExprNode {
+  public getCode(node: GraphNode): Expr {
     const intensity = refUniform('intensity', DataType.FLOAT, node);
     const iuv = fork(refTexCoords(), 'uv');
     const duv = refInput('duv', DataType.VEC4, node, iuv);

@@ -33,11 +33,11 @@ export interface BaseExpr {
 
 export interface AssignExpr extends BaseExpr {
   kind: 'assign';
-  left: ExprNode;
-  right: ExprNode;
+  left: Expr;
+  right: Expr;
 }
 
-export const assign = (left: ExprNode, right: ExprNode): AssignExpr => ({
+export const assign = (left: Expr, right: Expr): AssignExpr => ({
   type: left.type,
   kind: 'assign',
   left,
@@ -47,10 +47,10 @@ export const assign = (left: ExprNode, right: ExprNode): AssignExpr => ({
 export interface CallNode extends BaseExpr {
   kind: 'call';
   callable: FunctionDefn;
-  args: ExprNode[];
+  args: Expr[];
 }
 
-export const call = (callable: FunctionDefn, ...args: ExprNode[]): CallNode => ({
+export const call = (callable: FunctionDefn, ...args: Expr[]): CallNode => ({
   kind: 'call',
   args,
   type: callable.result,
@@ -61,13 +61,13 @@ export interface LocalDefn extends BaseExpr {
   kind: 'deflocal';
   name: string;
   type: DataType;
-  init: ExprNode | null;
+  init: Expr | null;
 }
 
 export const defLocal = (
   name: string,
   type: DataType,
-  init: ExprNode | null = null
+  init: Expr | null = null
 ): LocalDefn => ({
   kind: 'deflocal',
   name,
@@ -106,14 +106,14 @@ export interface RefInputExpr extends BaseExpr {
   name: string;
   type: DataType;
   node: GraphNode;
-  uv: ExprNode;
+  uv: Expr;
 }
 
 export const refInput = (
   name: string,
   type: DataType,
   node: GraphNode,
-  uv: ExprNode
+  uv: Expr
 ): RefInputExpr => ({
   kind: 'refinput',
   name,
@@ -145,10 +145,10 @@ export const literal = (value: string, type: DataType): LiteralNode => ({
 
 export interface TypeCastExpr extends BaseExpr {
   kind: 'typecast';
-  value: ExprNode;
+  value: Expr;
 }
 
-export const typeCast = (value: ExprNode, type: DataType): TypeCastExpr => ({
+export const typeCast = (value: Expr, type: DataType): TypeCastExpr => ({
   kind: 'typecast',
   value,
   type,
@@ -156,12 +156,12 @@ export const typeCast = (value: ExprNode, type: DataType): TypeCastExpr => ({
 
 export interface GetAttrExpr extends BaseExpr {
   kind: 'getattr';
-  base: ExprNode;
+  base: Expr;
   name: string;
   type: DataType;
 }
 
-export const getAttr = (base: ExprNode, name: string, type: DataType): GetAttrExpr => ({
+export const getAttr = (base: Expr, name: string, type: DataType): GetAttrExpr => ({
   kind: 'getattr',
   base,
   name,
@@ -171,15 +171,15 @@ export const getAttr = (base: ExprNode, name: string, type: DataType): GetAttrEx
 export interface BinaryOpExpr extends BaseExpr {
   kind: 'binop';
   op: BinaryOperator;
-  left: ExprNode;
-  right: ExprNode;
+  left: Expr;
+  right: Expr;
   type: DataType;
 }
 
 export const binop = (
   op: BinaryOperator,
-  left: ExprNode,
-  right: ExprNode,
+  left: Expr,
+  right: Expr,
   type: DataType
 ): BinaryOpExpr => ({
   kind: 'binop',
@@ -189,7 +189,7 @@ export const binop = (
   type,
 });
 
-export const add = (left: ExprNode, right: ExprNode, type: DataType): BinaryOpExpr => ({
+export const add = (left: Expr, right: Expr, type: DataType): BinaryOpExpr => ({
   kind: 'binop',
   op: 'add',
   left,
@@ -197,7 +197,7 @@ export const add = (left: ExprNode, right: ExprNode, type: DataType): BinaryOpEx
   type,
 });
 
-export const multiply = (left: ExprNode, right: ExprNode, type: DataType): BinaryOpExpr => ({
+export const multiply = (left: Expr, right: Expr, type: DataType): BinaryOpExpr => ({
   kind: 'binop',
   op: 'mul',
   left,
@@ -205,7 +205,7 @@ export const multiply = (left: ExprNode, right: ExprNode, type: DataType): Binar
   type,
 });
 
-export const subtract = (left: ExprNode, right: ExprNode, type: DataType): BinaryOpExpr => ({
+export const subtract = (left: Expr, right: Expr, type: DataType): BinaryOpExpr => ({
   kind: 'binop',
   op: 'sub',
   left,
@@ -213,7 +213,7 @@ export const subtract = (left: ExprNode, right: ExprNode, type: DataType): Binar
   type,
 });
 
-export const divide = (left: ExprNode, right: ExprNode, type: DataType): BinaryOpExpr => ({
+export const divide = (left: Expr, right: Expr, type: DataType): BinaryOpExpr => ({
   kind: 'binop',
   op: 'div',
   left,
@@ -227,13 +227,13 @@ export const divide = (left: ExprNode, right: ExprNode, type: DataType): BinaryO
  */
 export interface ForkExpr extends BaseExpr {
   kind: 'fork';
-  value: ExprNode;
+  value: Expr;
   name: string;
   key: symbol;
   type: DataType;
 }
 
-export const fork = (value: ExprNode, name: string): ForkExpr => ({
+export const fork = (value: Expr, name: string): ForkExpr => ({
   kind: 'fork',
   value,
   name,
@@ -241,7 +241,7 @@ export const fork = (value: ExprNode, name: string): ForkExpr => ({
   type: value.type,
 });
 
-export type ExprNode =
+export type Expr =
   | AssignExpr
   | CallNode
   | LocalDefn
@@ -255,8 +255,8 @@ export type ExprNode =
   | BinaryOpExpr
   | ForkExpr;
 
-export function defineFn(callable: FunctionDefn): (...args: ExprNode[]) => CallNode {
-  return (...args: ExprNode[]) => ({
+export function defineFn(callable: FunctionDefn): (...args: Expr[]) => CallNode {
+  return (...args: Expr[]) => ({
     kind: 'call',
     args,
     type: callable.result,
@@ -264,7 +264,7 @@ export function defineFn(callable: FunctionDefn): (...args: ExprNode[]) => CallN
   });
 }
 
-export function castIfNeeded(expr: ExprNode, type: DataType): ExprNode {
+export function castIfNeeded(expr: Expr, type: DataType): Expr {
   if (expr.type === type || glType(expr.type) === glType(type)) {
     return expr;
   } else {

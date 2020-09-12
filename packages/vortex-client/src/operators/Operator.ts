@@ -1,5 +1,5 @@
 import { DataType } from './DataType';
-import { ExprNode, literal } from '../render/ExprNode';
+import { Expr, literal } from '../render/Expr';
 import { GraphNode } from '../graph';
 import { Input } from './Input';
 import { Output } from './Output';
@@ -30,7 +30,7 @@ export abstract class Operator {
   }
 
   /** Return the expression for this node. */
-  public getCode(node: GraphNode): ExprNode {
+  public getCode(node: GraphNode): Expr {
     return literal('vec4(0.0, 0.0, 0.0, 0.0)', DataType.VEC4);
   }
 

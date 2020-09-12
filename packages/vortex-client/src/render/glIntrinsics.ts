@@ -1,7 +1,7 @@
 // Defines built-in GLSL functions
 
 import { DataType } from '../operators';
-import { defineFn } from './ExprNode';
+import { defineFn } from './Expr';
 
 export const vec2 = defineFn({
   name: 'vec2',

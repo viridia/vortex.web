@@ -1,4 +1,4 @@
-import { BinaryOpExpr, BinaryOperator, ExprNode, castIfNeeded } from './ExprNode';
+import { BinaryOpExpr, BinaryOperator, Expr, castIfNeeded } from './Expr';
 import { DataType } from '../operators';
 import { glType } from '../operators/DataType';
 
@@ -37,7 +37,7 @@ const right = (left: StringChunk, right: StringChunk): StringChunk => ({
 
 /** Code generator. Takes in an expression tree and outputs a string tree. */
 export class CodeGen {
-  public gen(expr: ExprNode, suffix: string = ''): StringChunk {
+  public gen(expr: Expr, suffix: string = ''): StringChunk {
     switch (expr.kind) {
       case 'assign': {
         // Bind the '=' more tightly to the first segment
@@ -137,7 +137,7 @@ export class CodeGen {
       }
 
       case 'binop': {
-        const parensIfNeeded = (expr: ExprNode, parent: BinaryOpExpr): StringChunk => {
+        const parensIfNeeded = (expr: Expr, parent: BinaryOpExpr): StringChunk => {
           const parentPrec = precedence[parent.op];
           if (expr.kind === 'binop') {
             if (expr.op === parent.op && commutative[parent.op]) {

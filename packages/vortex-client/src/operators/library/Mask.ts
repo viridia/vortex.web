@@ -1,12 +1,12 @@
 import { DataType, Input, Operator, Output, Parameter } from '..';
 import {
-  ExprNode,
+  Expr,
   defineFn,
   fork,
   refInput,
   refTexCoords,
   refUniform,
-} from '../../render/ExprNode';
+} from '../../render/Expr';
 import { GraphNode } from '../../graph';
 
 const IMPORTS = new Set(['mask']);
@@ -66,7 +66,7 @@ Blends two source images based on a grayscale mask.
     return IMPORTS;
   }
 
-  public getCode(node: GraphNode): ExprNode {
+  public getCode(node: GraphNode): Expr {
     const tuv = fork(refTexCoords(), 'uv');
     return mask(
       refInput('a', DataType.VEC4, node, tuv),
