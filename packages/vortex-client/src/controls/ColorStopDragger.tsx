@@ -49,9 +49,11 @@ export const ColorStopDragger: FC<Props> = ({
   selected,
   value,
   index,
+  ...props
 }) => {
   return (
     <ColorStopDraggerElt
+      {...props}
       className={classNames('color-stop-dragger', { selected })}
       style={{ left: `${value * 100}%` }}
       data-stopindex={index}

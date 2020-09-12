@@ -145,7 +145,7 @@ export const Modal: FC<Props> = ({
   ...props
 }) => {
   const state = useTransition({ in: open, onExited });
-  useShortcuts({}, { scope: 'dialog' });
+  useShortcuts({}, { scope: 'dialog', scopeActive: state !== 'exited' });
 
   return state !== 'exited' ? (
     <ModalOverlay isOpen={true} className={classNames(state)} onDismiss={onClose}>

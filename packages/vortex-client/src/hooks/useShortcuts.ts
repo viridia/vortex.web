@@ -1,9 +1,10 @@
 import hotkeys from 'hotkeys-js';
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
 interface Options {
   scope?: string;
   element?: HTMLElement;
+  scopeActive?: boolean;
 }
 
 interface KeyMap {
@@ -27,7 +28,7 @@ function keyMapsEqual(a: KeyMap, b: KeyMap) {
 
 export const useShortcuts = (keys: KeyMap, options: Options = {}) => {
   const [keyMap, setKeyMap] = useState<KeyMap>({});
-  const { scope, element } = options;
+  const { scope, element, scopeActive = true } = options;
 
   // Prevent unnecessary keymap churn.
   useEffect(() => {
@@ -50,10 +51,10 @@ export const useShortcuts = (keys: KeyMap, options: Options = {}) => {
 
   // Active a new scope if the scope option was present.
   useEffect(() => {
-    if (scope && scope !== hotkeys.getScope()) {
+    if (scopeActive && scope && scope !== hotkeys.getScope()) {
       const savedScope = hotkeys.getScope();
       hotkeys.setScope(scope);
       return () => hotkeys.setScope(savedScope);
     }
-  }, [scope]);
+  }, [scope, scopeActive]);
 };

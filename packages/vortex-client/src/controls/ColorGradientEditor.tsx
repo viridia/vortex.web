@@ -4,10 +4,11 @@ import { ColorGradient, ColorStop, RGBAColor, formatRGBAColor } from '../render/
 import { ColorPicker } from './ColorPicker';
 import { ColorStopDragger } from './ColorStopDragger';
 import { ComboSlider } from './ComboSlider';
-import { DragState, usePointerDrag } from '../hooks/usePointerDrag';
+import { DragState, usePointerDrag } from '../hooks/usePointerDrag2';
 import { colors } from '../styles';
 import { observer, useLocalStore } from 'mobx-react';
 import { runInAction } from 'mobx';
+import { useShortcuts } from '../hooks/useShortcuts';
 
 const ColorGradientEditorElt = styled.div`
   display: flex;
@@ -81,7 +82,7 @@ export const ColorGradientEditor: FC<Props> = observer(({ caption, value: gradie
     return {
       onDragStart(e: DragState) {
         // Test if we clicked on an existing stop; if so then select it and start dragging.
-        const index = getTargetStopIndex(e.target);
+        const index = getTargetStopIndex(e.target!);
         if (index >= 0) {
           const color = Array.from(gradient[index].value) as RGBAColor;
           setSelected(index);
@@ -112,16 +113,39 @@ export const ColorGradientEditor: FC<Props> = observer(({ caption, value: gradie
     };
   }, [getTargetStopIndex, gradient, onChange, selected]);
 
-  usePointerDrag<HTMLDivElement>(callbacks, gradientElt);
+  const pointerMethods = usePointerDrag<HTMLDivElement>(callbacks);
+
+  const onDelete = useCallback(() => {
+    if (selected > 0 && selected < gradient.length - 1) {
+      runInAction(() => {
+        gradient.splice(selected, 1);
+        setSelected(-1);
+      });
+    }
+  }, [getTargetStopIndex, gradient, selected]);
+
+  useShortcuts(
+    {
+      del: onDelete,
+      backspace: onDelete,
+    },
+    { scope: 'gradient' }
+  );
 
   const onDoubleClick = useCallback(
     (e: React.MouseEvent<HTMLElement>) => {
+      e.stopPropagation();
+
+      // Needed because double-click returns the wrong target after pointer down.
+      const clickElement = document.elementFromPoint(e.clientX, e.clientY);
+
       // Test if we clicked on an existing stop; if so then delete it.
-      const index = getTargetStopIndex(e.target as HTMLElement);
+      const index = getTargetStopIndex(clickElement as HTMLElement);
       if (index >= 0) {
         if (index > 0 && index < gradient.length - 1) {
           runInAction(() => {
             gradient.splice(index, 1);
+            setSelected(-1);
           });
         }
         return;
@@ -175,10 +199,10 @@ export const ColorGradientEditor: FC<Props> = observer(({ caption, value: gradie
       <ColorStops className="color-stops property-group">
         <ColorStopsCaption className="caption">{caption}</ColorStopsCaption>
         <ColorStopsGradient
+          {...pointerMethods}
           className="gradient"
           style={{ backgroundImage: store.gradientFill }}
           ref={setGradientElt}
-          // onClick={onClick}
           onDoubleClick={onDoubleClick}
         >
           {gradient.map((cs, i) => (

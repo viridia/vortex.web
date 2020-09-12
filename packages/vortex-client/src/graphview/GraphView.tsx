@@ -216,8 +216,8 @@ const useGraphDrag = (graph: Graph) => {
           }
         } else if (entity instanceof AbstractTerminal) {
           const rect = e.currentTarget.getBoundingClientRect();
-          state.dragX = e.clientX - rect.left;
-          state.dragY = e.clientY - rect.top;
+          state.dragX = e.clientX - rect.left + graph.bounds.xMin;
+          state.dragY = e.clientY - rect.top + graph.bounds.yMin;
           setActiveTerminal(null);
           if (isOutputTerminal(entity)) {
             state.dragSource = entity;

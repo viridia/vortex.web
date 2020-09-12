@@ -231,10 +231,13 @@ const App: FC = () => {
     graph.deleteSelection();
   }, [graph]);
 
-  useShortcuts({
-    del: onDelete,
-    backspace: onDelete,
-  });
+  useShortcuts(
+    {
+      del: onDelete,
+      backspace: onDelete,
+    },
+    { scope: 'app' }
+  );
 
   return (
     <div
