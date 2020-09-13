@@ -118,7 +118,7 @@ export const ColorGradientEditor: FC<Props> = observer(({ caption, value: gradie
       del: onDelete,
       backspace: onDelete,
     },
-    { scope: 'gradient' }
+    { scope: 'gradient', scopeActive: selected >= 0 }
   );
 
   const onDoubleClick = useCallback(

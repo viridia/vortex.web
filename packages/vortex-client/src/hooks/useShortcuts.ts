@@ -1,5 +1,5 @@
 import hotkeys from 'hotkeys-js';
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 interface Options {
   scope?: string;
@@ -45,7 +45,13 @@ export const useShortcuts = (keys: KeyMap, options: Options = {}) => {
         keyMap[handler.key]();
       });
 
-      return () => hotkeys.unbind(keyNames);
+      return () => {
+        if (scope) {
+          hotkeys.unbind(keyNames, scope);
+        } else {
+          hotkeys.unbind(keyNames);
+        }
+      }
     }
   }, [element, keyMap, scope]);
 
@@ -54,7 +60,9 @@ export const useShortcuts = (keys: KeyMap, options: Options = {}) => {
     if (scopeActive && scope && scope !== hotkeys.getScope()) {
       const savedScope = hotkeys.getScope();
       hotkeys.setScope(scope);
-      return () => hotkeys.setScope(savedScope);
+      return () => {
+        hotkeys.setScope(savedScope);
+      }
     }
   }, [scope, scopeActive]);
 };

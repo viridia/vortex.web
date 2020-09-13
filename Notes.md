@@ -1,5 +1,6 @@
 # TODO:
 
+* Finish migration to pointerDrag2
 * Bug with buffered connections, shows wrong image.
   * Blur chooses incorrect texture inputs when used upstream.
 * MobX Exception in renderer (set texture)

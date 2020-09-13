@@ -271,3 +271,15 @@ export function castIfNeeded(expr: Expr, type: DataType): Expr {
     return typeCast(expr, type);
   }
 }
+
+const DEFAULT_VALUE: { [key: number]: LiteralNode } = {
+  [DataType.INTEGER]: literal('0', DataType.INTEGER),
+  [DataType.FLOAT]: literal('0.0', DataType.FLOAT),
+  [DataType.VEC2]: literal('vec2(0.0, 0.0)', DataType.VEC2),
+  [DataType.VEC3]: literal('vec3(0.0, 0.0, 0.0)', DataType.VEC3),
+  [DataType.VEC4]: literal('vec4(0.0, 0.0, 0.0, 0.0)', DataType.VEC4),
+};
+
+export function defaultValue(type: DataType) {
+  return DEFAULT_VALUE[type];
+}
