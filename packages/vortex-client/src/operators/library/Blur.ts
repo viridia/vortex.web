@@ -1,13 +1,17 @@
 import { DataType, Input, Operator, Output, Parameter } from '..';
-import { Expr, defineFn, literal, refTexCoords, refUniform } from '../../render/Expr';
+import { Expr, defineFn, refTexCoords, refUniform } from '../../render/Expr';
+import { vec4 } from '../../render/glIntrinsics';
 import { GraphNode } from '../../graph';
+import { makeFunctionType } from '../FunctionDefn';
 
 const IMPORTS = new Set(['blur']);
 
 export const blur = defineFn({
   name: 'blur',
-  result: DataType.VEC4,
-  args: [DataType.IMAGE, DataType.FLOAT, DataType.VEC2],
+  type: makeFunctionType({
+    result: DataType.VEC4,
+    args: [DataType.IMAGE, DataType.FLOAT, DataType.VEC2],
+  }),
 });
 
 class Blur extends Operator {
@@ -54,7 +58,7 @@ designed to scale with the size of the input, which requires a large amount of s
 
   public getCode(node: GraphNode): Expr {
     if (!node.getInputTerminal('in').connection) {
-      return literal('vec4(0.5, 0.5, 0.5, 1.0)', DataType.VEC4);
+      return vec4(.5, .5, .5, 1);
     }
 
     return blur(

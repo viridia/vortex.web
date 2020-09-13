@@ -1,13 +1,16 @@
 import { DataType, Input, Operator, Output, Parameter } from '..';
 import { Expr, defineFn, refInput, refTexCoords, refUniform } from '../../render/Expr';
 import { GraphNode } from '../../graph';
+import { makeFunctionType } from '../FunctionDefn';
 
 const IMPORTS = new Set(['modulus']);
 
 export const modulus = defineFn({
   name: 'modulus',
-  result: DataType.FLOAT,
-  args: [DataType.FLOAT, DataType.INTEGER, DataType.FLOAT, DataType.FLOAT],
+  type: makeFunctionType({
+    result: DataType.FLOAT,
+    args: [DataType.FLOAT, DataType.INTEGER, DataType.FLOAT, DataType.FLOAT],
+  }),
 });
 
 class Modulus extends Operator {

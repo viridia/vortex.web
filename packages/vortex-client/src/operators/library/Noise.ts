@@ -1,15 +1,34 @@
 import { DataType, Operator, Output, Parameter } from '..';
+import { Expr, defineFn, refTexCoords, refUniform } from '../../render/Expr';
 import { GraphNode } from '../../graph';
+import { makeFunctionType } from '../FunctionDefn';
 
-const IMPORTS = new Set(['steppers', 'permute', 'pnoise', 'gradient-color', 'periodic-noise']);
+const IMPORTS = new Set(['steppers', 'permute', 'pnoise', 'periodic-noise2']);
+
+export const noise2 = defineFn({
+  name: 'periodicNoise2',
+  type: makeFunctionType({
+    result: DataType.FLOAT,
+    args: [
+      DataType.VEC2,
+      DataType.INTEGER,
+      DataType.INTEGER,
+      DataType.FLOAT,
+      DataType.INTEGER,
+      DataType.INTEGER,
+      DataType.FLOAT,
+    ],
+  }),
+});
 
 class Noise extends Operator {
-  public readonly deprecated = true;
-  public readonly outputs: Output[] = [{
-    id: 'out',
-    name: 'Out',
-    type: DataType.VEC4,
-  }];
+  public readonly outputs: Output[] = [
+    {
+      id: 'out',
+      name: 'Out',
+      type: DataType.FLOAT,
+    },
+  ];
 
   public readonly params: Parameter[] = [
     {
@@ -39,15 +58,6 @@ class Noise extends Operator {
       default: 0,
     },
     {
-      id: 'scale_value',
-      name: 'Value Scale',
-      type: DataType.FLOAT,
-      min: .01,
-      max: 2,
-      default: 0.7,
-      precision: 2,
-    },
-    {
       id: 'start_band',
       name: 'Start Band',
       type: DataType.INTEGER,
@@ -72,67 +82,31 @@ class Noise extends Operator {
       default: 0.5,
       precision: 2,
     },
-    {
-      id: 'color',
-      name: 'Color',
-      type: DataType.RGBA_GRADIENT,
-      max: 32,
-      default: [
-        {
-          value: [0, 0, 0, 1],
-          position: 0,
-        },
-        {
-          value: [1, 1, 1, 1],
-          position: 1,
-        },
-      ],
-    },
   ];
   public readonly description = `
 Generates a periodic Perlin noise texture.
 * **Scale X** is the overall scaling factor along the x-axis.
 * **Scale Y** is the overall scaling factor along the y-axis.
 * **Z Offset** is the z-coordinate within the 3D noise space.
-* **Value Scale** is a multiplier on the output.
 * **Start Band** and **End Band** control the range of frequency bands. Each band represents
   one octave of noise.
 * **Persistance** determines the amplitude falloff from one frequencey band to the next.
-
-This generator is deprecated and will eventually be removed in favor of the simpler and
-more efficient Noise2.
 `;
 
   constructor() {
-    super('generator', 'Noise (old)', 'pattern_noise');
+    super('generator', 'Perlin Noise', 'gen_noise');
+  }
+
+  public getCode(node: GraphNode): Expr {
+    return noise2(
+      refTexCoords(),
+      ...this.params.map(param => refUniform(param.id, param.type, node))
+    );
   }
 
   public getImports(node: GraphNode): Set<string> {
     return IMPORTS;
   }
-
-  // public readOutputValue(assembly: ShaderAssembly, node: GraphNode, out: string, uv: Expr): Expr {
-  //   if (assembly.start(node)) {
-  //     assembly.declareUniforms(this, node.id, this.params);
-  //     assembly.addCommon('steppers', 'permute', 'pnoise', 'gradient-color', 'periodic-noise');
-  //     assembly.finish(node);
-  //   }
-
-  //   const colorName = this.uniformName(node.id, 'color');
-  //   const args = [
-  //     uv,
-  //     assembly.uniform(node, 'scale_x'),
-  //     assembly.uniform(node, 'scale_y'),
-  //     assembly.uniform(node, 'offset_z'),
-  //     assembly.uniform(node, 'scale_value'),
-  //     assembly.uniform(node, 'start_band'),
-  //     assembly.uniform(node, 'end_band'),
-  //     assembly.uniform(node, 'persistence'),
-  //     assembly.ident(`${colorName}_colors`, DataType.OTHER),
-  //     assembly.ident(`${colorName}_positions`, DataType.OTHER),
-  //   ];
-  //   return assembly.call('periodicNoise', args, DataType.VEC4);
-  // }
 }
 
 export default new Noise();

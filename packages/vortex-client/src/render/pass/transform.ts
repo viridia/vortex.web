@@ -1,5 +1,12 @@
 import { DataType } from '../../operators';
-import { Expr, castIfNeeded, defLocal, literal, refLocal, defaultValue } from './../Expr';
+import {
+  Expr,
+  castIfNeeded,
+  defLocal,
+  literal,
+  refLocal,
+  defaultValue,
+} from './../Expr';
 
 let textureCoords: Expr = literal('vTextureCoord', DataType.VEC2);
 
@@ -20,14 +27,16 @@ export function transform(expr: Expr, out: Expr[]): void {
       }
 
       case 'call': {
-        if (expr.args.length !== expr.callable.args.length) {
-          throw Error(`Argument length mismatch: ${expr.callable.name}`);
-        }
-        const args = expr.args.map(arg => visit(arg));
-        if (args.every((arg, index) => arg === expr.args[index])) {
+        const args = expr.args.map(arg => {
+          if (typeof arg === 'number' || typeof arg === 'string') {
+            return arg;
+          }
+          return visit(arg);
+        });
+        if (expr.type !== DataType.OTHER && args.every((arg, index) => arg === expr.args[index])) {
           return expr;
         }
-        return { ...expr, args };
+        return { ...expr, args, type: expr.callable.type[0].result };
       }
 
       case 'reflocal':

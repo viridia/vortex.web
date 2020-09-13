@@ -1,17 +1,12 @@
 import { DataType } from '../operators';
 import { GraphNode } from '../graph';
 import { glType } from '../operators/DataType';
-
-/** Defines the name and type of a callable function. */
-export interface FunctionDefn {
-  name: string;
-  result: DataType;
-  args: DataType[];
-}
+import { FunctionDefn, OverloadDefn } from '../operators/FunctionDefn';
 
 export type ExprKind =
   | 'assign'
   | 'call'
+  | 'ovcall'
   | 'op'
   | 'deflocal'
   | 'reflocal'
@@ -44,16 +39,29 @@ export const assign = (left: Expr, right: Expr): AssignExpr => ({
   right,
 });
 
-export interface CallNode extends BaseExpr {
+export interface CallExpr extends BaseExpr {
   kind: 'call';
   callable: FunctionDefn;
+  args: ExprOrLiteral[];
+}
+
+export const call = (callable: FunctionDefn, ...args: ExprOrLiteral[]): CallExpr => ({
+  kind: 'call',
+  args,
+  type: callable.type.length > 1 ? DataType.OTHER : callable.type[0].result,
+  callable,
+});
+
+export interface OverloadCallExpr extends BaseExpr {
+  kind: 'ovcall';
+  callable: OverloadDefn;
   args: Expr[];
 }
 
-export const call = (callable: FunctionDefn, ...args: Expr[]): CallNode => ({
-  kind: 'call',
+export const ovcall = (callable: OverloadDefn, ...args: Expr[]): OverloadCallExpr => ({
+  kind: 'ovcall',
   args,
-  type: callable.result,
+  type: callable.type.result,
   callable,
 });
 
@@ -243,7 +251,7 @@ export const fork = (value: Expr, name: string): ForkExpr => ({
 
 export type Expr =
   | AssignExpr
-  | CallNode
+  | CallExpr
   | LocalDefn
   | RefLocalExpr
   | RefUniformExpr
@@ -255,21 +263,72 @@ export type Expr =
   | BinaryOpExpr
   | ForkExpr;
 
-export function defineFn(callable: FunctionDefn): (...args: Expr[]) => CallNode {
-  return (...args: Expr[]) => ({
+export type ExprOrLiteral = Expr | string | number;
+
+export function defineFn(callable: FunctionDefn): (...args: ExprOrLiteral[]) => CallExpr {
+  return (...args: ExprOrLiteral[]) => ({
     kind: 'call',
     args,
-    type: callable.result,
+    type: DataType.OTHER,
     callable,
   });
 }
 
-export function castIfNeeded(expr: Expr, type: DataType): Expr {
-  if (expr.type === type || glType(expr.type) === glType(type)) {
+export function castIfNeeded(expr: ExprOrLiteral, type: DataType): Expr {
+  if (typeof expr === 'number') {
+    if (type === DataType.FLOAT) {
+      return literal(formatFloat(expr), type);
+    } else if (type === DataType.INTEGER) {
+      return literal(formatInteger(expr), type);
+    } else {
+      throw Error(`Invalid literal type: ${DataType[type]}: ${JSON.stringify(expr)}`);
+    }
+  } else if (typeof expr === 'string') {
+    if (type === DataType.FLOAT) {
+      return literal(formatFloat(Number(expr)), type);
+    } else if (type === DataType.INTEGER) {
+      return literal(formatInteger(Number(expr)), type);
+    } else {
+      throw Error(`Invalid literal type: ${DataType[type]}: ${JSON.stringify(expr)}`);
+    }
+  } else if (expr.type === type || glType(expr.type) === glType(type)) {
     return expr;
   } else {
     return typeCast(expr, type);
   }
+}
+
+function formatFloat(value: number): string {
+  if (isNaN(value)) {
+    throw Error('Not a number');
+  }
+
+  const str = String(value);
+  if (!str.includes('.')) {
+    return str + '.';
+  } else {
+    if (str.startsWith('0.') && str.length > 2) {
+      return str.slice(1);
+    }
+    return str;
+  }
+}
+
+function formatInteger(value: number): string {
+  if (isNaN(value)) {
+    throw Error('Not a number');
+  }
+
+  if (value !== Math.fround(value)) {
+    throw Error('Not an integer');
+  }
+
+  const result = String(value);
+  if (result.includes('.')) {
+    throw Error(`Invalid integer literal: ${value}`);
+  }
+
+  return result;
 }
 
 const DEFAULT_VALUE: { [key: number]: LiteralNode } = {

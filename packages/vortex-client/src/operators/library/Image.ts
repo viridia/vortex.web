@@ -1,11 +1,14 @@
 import { DataType, Operator, Output, Parameter } from '..';
 import { Expr, defineFn, literal, refTexCoords, refUniform } from '../../render/Expr';
 import { GraphNode } from '../../graph';
+import { makeFunctionType } from '../FunctionDefn';
 
 export const texture = defineFn({
   name: 'texture',
-  result: DataType.VEC4,
-  args: [DataType.IMAGE, DataType.VEC2],
+  type: makeFunctionType({
+    result: DataType.VEC4,
+    args: [DataType.IMAGE, DataType.VEC2],
+  }),
 });
 
 class Image extends Operator {

@@ -1,25 +1,28 @@
 import { DataType, Operator, Output, Parameter } from '..';
 import { Expr, defineFn, refTexCoords, refUniform } from '../../render/Expr';
 import { GraphNode } from '../../graph';
+import { makeFunctionType } from '../FunctionDefn';
 
 const IMPORTS = new Set(['waves']);
 
 export const waves = defineFn({
   name: 'waves',
-  result: DataType.FLOAT,
-  args: [
-    DataType.VEC2,
-    DataType.INTEGER,
-    DataType.INTEGER,
-    DataType.FLOAT,
-    DataType.INTEGER,
-    DataType.INTEGER,
-    DataType.FLOAT,
-    DataType.INTEGER,
-    DataType.INTEGER,
-    DataType.FLOAT,
-    DataType.FLOAT,
-  ],
+  type: makeFunctionType({
+    result: DataType.FLOAT,
+    args: [
+      DataType.VEC2,
+      DataType.INTEGER,
+      DataType.INTEGER,
+      DataType.FLOAT,
+      DataType.INTEGER,
+      DataType.INTEGER,
+      DataType.FLOAT,
+      DataType.INTEGER,
+      DataType.INTEGER,
+      DataType.FLOAT,
+      DataType.FLOAT,
+    ],
+  }),
 });
 
 class Waves extends Operator {

@@ -14,17 +14,22 @@ import {
 } from '../../render/Expr';
 import { GraphNode } from '../../graph';
 import { cross_3, normalize_3, vec3_2_1, vec4_3_1 } from '../../render/glIntrinsics';
+import { makeFunctionType } from '../FunctionDefn';
 
 export const dFdx = defineFn({
   name: 'dFdx',
-  result: DataType.VEC3,
-  args: [DataType.VEC3],
+  type: makeFunctionType({
+    result: DataType.VEC3,
+    args: [DataType.VEC3],
+  }),
 });
 
 export const dFdy = defineFn({
   name: 'dFdy',
-  result: DataType.VEC3,
-  args: [DataType.VEC3],
+  type: makeFunctionType({
+    result: DataType.VEC3,
+    args: [DataType.VEC3],
+  }),
 });
 
 class NormalMap extends Operator {

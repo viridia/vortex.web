@@ -1,20 +1,16 @@
 import { DataType, Input, Operator, Output, Parameter } from '..';
-import {
-  Expr,
-  defineFn,
-  fork,
-  refInput,
-  refTexCoords,
-  refUniform,
-} from '../../render/Expr';
+import { Expr, defineFn, fork, refInput, refTexCoords, refUniform } from '../../render/Expr';
 import { GraphNode } from '../../graph';
+import { makeFunctionType } from '../FunctionDefn';
 
 const IMPORTS = new Set(['blend']);
 
 export const blend = defineFn({
   name: 'blend',
-  result: DataType.VEC4,
-  args: [DataType.VEC4, DataType.VEC4, DataType.INTEGER, DataType.FLOAT, DataType.INTEGER],
+  type: makeFunctionType({
+    result: DataType.VEC4,
+    args: [DataType.VEC4, DataType.VEC4, DataType.INTEGER, DataType.FLOAT, DataType.INTEGER],
+  }),
 });
 
 class Blend extends Operator {
@@ -94,12 +90,12 @@ Blends two source images, similar to layer operations in GIMP or PhotoShop.
   public getCode(node: GraphNode): Expr {
     const tuv = fork(refTexCoords(), 'uv');
     return blend(
-        refInput('a', DataType.VEC4, node, tuv),
-        refInput('b', DataType.VEC4, node, tuv),
-        refUniform('op', DataType.INTEGER, node),
-        refUniform('strength', DataType.FLOAT, node),
-        refUniform('norm', DataType.INTEGER, node)
-      );
+      refInput('a', DataType.VEC4, node, tuv),
+      refInput('b', DataType.VEC4, node, tuv),
+      refUniform('op', DataType.INTEGER, node),
+      refUniform('strength', DataType.FLOAT, node),
+      refUniform('norm', DataType.INTEGER, node)
+    );
   }
 }
 

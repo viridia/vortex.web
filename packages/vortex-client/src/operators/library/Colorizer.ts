@@ -1,13 +1,16 @@
 import { DataType, Input, Operator, Output, Parameter } from '..';
 import { Expr, defineFn, refInput, refTexCoords, refUniform } from '../../render/Expr';
 import { GraphNode } from '../../graph';
+import { makeFunctionType } from '../FunctionDefn';
 
 const IMPORTS = new Set(['gradient-color']);
 
 export const gradientColor = defineFn({
   name: 'gradientColor',
-  result: DataType.VEC4,
-  args: [DataType.FLOAT, DataType.VEC4_ARRAY, DataType.FLOAT_ARRAY],
+  type: makeFunctionType({
+    result: DataType.VEC4,
+    args: [DataType.FLOAT, DataType.VEC4_ARRAY, DataType.FLOAT_ARRAY],
+  }),
 });
 
 class Colorizer extends Operator {

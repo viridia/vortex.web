@@ -1,29 +1,25 @@
 import { DataType, Input, Operator, Output, Parameter } from '..';
-import {
-  Expr,
-  defineFn,
-  fork,
-  refInput,
-  refTexCoords,
-  refUniform,
-} from '../../render/Expr';
+import { Expr, defineFn, fork, refInput, refTexCoords, refUniform } from '../../render/Expr';
 import { GraphNode } from '../../graph';
+import { makeFunctionType } from '../FunctionDefn';
 
 const IMPORTS = new Set(['illuminate']);
 
 export const illuminate = defineFn({
   name: 'illuminate',
-  result: DataType.VEC4,
-  args: [
-    DataType.VEC4,
-    DataType.VEC4,
-    DataType.FLOAT,
-    DataType.FLOAT,
-    DataType.FLOAT,
-    DataType.VEC4,
-    DataType.VEC4,
-    DataType.VEC4,
-  ],
+  type: makeFunctionType({
+    result: DataType.VEC4,
+    args: [
+      DataType.VEC4,
+      DataType.VEC4,
+      DataType.FLOAT,
+      DataType.FLOAT,
+      DataType.FLOAT,
+      DataType.VEC4,
+      DataType.VEC4,
+      DataType.VEC4,
+    ],
+  }),
 });
 
 class Illuminate extends Operator {

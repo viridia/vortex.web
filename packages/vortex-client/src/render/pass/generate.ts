@@ -14,12 +14,13 @@ export function generate(expr: Expr): OutputChunk {
     }
 
     case 'call': {
-      if (expr.args.length !== expr.callable.args.length) {
+      const fnSig = expr.callable.type[0];
+      if (expr.args.length !== fnSig.args.length) {
         throw Error(`Argument length mismatch: ${expr.callable.name}`);
       }
       return fcall(
         expr.callable.name,
-        expr.args.map((arg, index) => generate(castIfNeeded(arg, expr.callable.args[index])))
+        expr.args.map((arg, index) => generate(castIfNeeded(arg, fnSig.args[index])))
       );
     }
 

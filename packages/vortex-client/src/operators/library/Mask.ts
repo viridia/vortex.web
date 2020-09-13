@@ -1,20 +1,16 @@
 import { DataType, Input, Operator, Output, Parameter } from '..';
-import {
-  Expr,
-  defineFn,
-  fork,
-  refInput,
-  refTexCoords,
-  refUniform,
-} from '../../render/Expr';
+import { Expr, defineFn, fork, refInput, refTexCoords, refUniform } from '../../render/Expr';
 import { GraphNode } from '../../graph';
+import { makeFunctionType } from '../FunctionDefn';
 
 const IMPORTS = new Set(['mask']);
 
 export const mask = defineFn({
   name: 'mask',
-  result: DataType.VEC4,
-  args: [DataType.VEC4, DataType.VEC4, DataType.VEC4, DataType.INTEGER],
+  type: makeFunctionType({
+    result: DataType.VEC4,
+    args: [DataType.VEC4, DataType.VEC4, DataType.VEC4, DataType.INTEGER],
+  }),
 });
 
 class Mask extends Operator {

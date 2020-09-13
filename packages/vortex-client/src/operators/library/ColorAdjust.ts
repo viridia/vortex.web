@@ -1,13 +1,16 @@
 import { DataType, Input, Operator, Output, Parameter } from '..';
 import { Expr, defineFn, refInput, refTexCoords, refUniform } from '../../render/Expr';
 import { GraphNode } from '../../graph';
+import { makeFunctionType } from '../FunctionDefn';
 
 const IMPORTS = new Set(['hsv', 'color-adjust']);
 
 export const colorAdjust = defineFn({
   name: 'colorAdjust',
-  result: DataType.VEC4,
-  args: [DataType.VEC4, DataType.FLOAT, DataType.FLOAT, DataType.FLOAT, DataType.FLOAT],
+  type: makeFunctionType({
+    result: DataType.VEC4,
+    args: [DataType.VEC4, DataType.FLOAT, DataType.FLOAT, DataType.FLOAT, DataType.FLOAT],
+  }),
 });
 
 class ColorAdjust extends Operator {

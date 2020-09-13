@@ -1,13 +1,16 @@
 import { DataType, Input, Operator, Output, Parameter } from '..';
 import { Expr, defineFn, literal, refTexCoords, refUniform } from '../../render/Expr';
 import { GraphNode } from '../../graph';
+import { makeFunctionType } from '../FunctionDefn';
 
 const IMPORTS = new Set(['crossfade']);
 
 export const crossfade = defineFn({
   name: 'crossfade',
-  result: DataType.VEC4,
-  args: [DataType.IMAGE, DataType.FLOAT, DataType.FLOAT, DataType.VEC2],
+  type: makeFunctionType({
+    result: DataType.VEC4,
+    args: [DataType.IMAGE, DataType.FLOAT, DataType.FLOAT, DataType.VEC2],
+  }),
 });
 
 class CrossFade extends Operator {
@@ -59,7 +62,7 @@ class CrossFade extends Operator {
 
   public getCode(node: GraphNode): Expr {
     if (!node.getInputTerminal('in').connection) {
-      return literal('vec4(0.0, 0.0, 0.0, 0.0)', DataType.VEC4);
+      return literal('vec4(0.5, 0.5, 0.5, 1.0)', DataType.VEC4);
     }
     return crossfade(
       refUniform('in', DataType.IMAGE, node),
