@@ -1,8 +1,7 @@
 # TODO:
 
+* Better reporting of shader errors.
 * Finish migration to pointerDrag2
-* Bug with buffered connections, shows wrong image.
-  * Blur chooses incorrect texture inputs when used upstream.
 * MobX Exception in renderer (set texture)
 * Calling noise twice.
 * Top-level package and build scripts
@@ -17,7 +16,6 @@
   * See if we can remove some of the type params that are passed in
 * Limit operator dragging to document size
 * Drag multiple selection.
-* Finish compass rose - center button should center the diagram
 * Make brick edges smoother - gamma correction?
 * Cached signals not working.
 * Upload JSON files
@@ -58,13 +56,12 @@
 
 # Vortex V2 - more efficient shader code generation.
 
-* Image uploading
+* Local image uploading
 * Optimize blend
-* Better line breaking
 * Need a better method for writing shader expressions than manual Expression trees.
+  * GLSL parser?
 * Show terminal data types
 * Show connection data types (float, vec2, vec3, buffered)
-* Rename Exprs package
 * Patterns:
   * Constant Float operator
     * Probably shouldn't have a preview window.
@@ -73,7 +70,7 @@
   * 1d curve
   * Square grid
   * Tartan
-  * Split RGBA
+  * Split RGBA (multiple outputs?)
   * Combine RGBA
   * Custom shader editor!!
     * We'll need an expansion button for side panel to make it wider.

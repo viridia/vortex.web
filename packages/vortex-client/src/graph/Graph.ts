@@ -146,11 +146,15 @@ export class Graph {
     this.selection.forEach(node => {
       node.outputs.forEach(output => {
         output.connections.forEach(connection => {
+          if (connection.dest) {
+            connection.dest.connection = null;
+          }
           output.disconnect(connection);
         });
       });
       node.inputs.forEach(input => {
         input.connection?.source?.disconnect(input.connection);
+        input.connection = null;
       });
       // Release any rendering resources
       node.setDeleted();

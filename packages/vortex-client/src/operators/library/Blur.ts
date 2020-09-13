@@ -54,8 +54,9 @@ designed to scale with the size of the input, which requires a large amount of s
 
   public getCode(node: GraphNode): Expr {
     if (!node.getInputTerminal('in').connection) {
-      return literal('vec4(0.0, 0.0, 0.0, 0.0)', DataType.VEC4);
+      return literal('vec4(0.5, 0.5, 0.5, 1.0)', DataType.VEC4);
     }
+
     return blur(
         refUniform('in', DataType.IMAGE, node),
         refUniform('radius', DataType.FLOAT, node),

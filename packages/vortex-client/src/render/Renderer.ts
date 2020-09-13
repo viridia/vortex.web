@@ -4,6 +4,7 @@ import { DataType } from '../operators';
 import { GLResources } from './GLResources';
 import { GraphNode } from '../graph';
 import { createContext } from 'react';
+import { runInAction } from 'mobx';
 // import { observable, action } from 'mobx';
 
 type RenderTaskState = 'running' | 'finishing' | 'stopped';
@@ -60,12 +61,7 @@ export class Renderer {
     this.tiling = tiling;
   }
 
-  public render(
-    node: GraphNode,
-    width: number,
-    height: number,
-    out: CanvasRenderingContext2D
-  ) {
+  public render(node: GraphNode, width: number, height: number, out: CanvasRenderingContext2D) {
     // this.taskState = 'running';
     const shaderSource = node.source;
     this.canvas.width = width;
@@ -103,11 +99,7 @@ export class Renderer {
   }
 
   // Render a node to a texture buffer, used by nodes that have buffered inputs.
-  private renderNodeToBuffer(
-    srcNode: GraphNode,
-    dstNode: GraphNode,
-    inputId: string
-  ) {
+  private renderNodeToBuffer(srcNode: GraphNode, dstNode: GraphNode, inputId: string) {
     const shaderSource = srcNode.source;
     const gl = this.gl;
     const width: number = nextHighestPowerOfTwo(this.canvas.width);
@@ -124,9 +116,11 @@ export class Renderer {
     let texture = destResources.textures.get(inputId) || null;
     if (!destResources.textures.has(inputId)) {
       texture = gl.createTexture();
-      if (texture) {
-        destResources.textures.set(inputId, texture);
-      }
+      runInAction(() => {
+        if (texture) {
+          destResources.textures.set(inputId, texture);
+        }
+      });
     }
 
     gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -175,6 +169,11 @@ export class Renderer {
         }
         node.visitUpstreamNodes((upstream, connection) => {
           this.setShaderUniforms(upstream, program);
+          for (const input of upstream.operator.inputs) {
+            if (input.buffered) {
+              this.setShaderInputBufferUniforms(upstream, program, input.id);
+            }
+          }
         });
       });
     }
@@ -226,7 +225,6 @@ export class Renderer {
     for (const param of params) {
       const value = paramValues.has(param.id) ? paramValues.get(param.id) : param.default;
       const uniformName = node.operator.uniformName(node.id, param.id);
-      // console.log('   *', uniformName, value);
       switch (param.type) {
         case DataType.INTEGER:
           gl.uniform1i(
@@ -295,9 +293,11 @@ export class Renderer {
 
   public setShaderInputBufferUniforms(node: GraphNode, program: WebGLProgram, id: string) {
     const input = node.getInputTerminal(id);
-    if (input.connection) {
-      this.bindTexture(program, node.getTexture(id), node.operator.uniformName(node.id, id));
-    }
+    this.bindTexture(
+      program,
+      input.connection ? node.getTexture(id) : undefined,
+      node.operator.uniformName(node.id, id)
+    );
   }
 
   public bindTexture(
@@ -309,11 +309,11 @@ export class Renderer {
     gl.activeTexture(gl.TEXTURE0 + this.nextTextureUnit);
     if (texture) {
       gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.uniform1i(gl.getUniformLocation(program, uniformName), this.nextTextureUnit);
+      this.nextTextureUnit += 1;
     } else {
       gl.bindTexture(gl.TEXTURE_2D, null);
     }
-    gl.uniform1i(gl.getUniformLocation(program, uniformName), this.nextTextureUnit);
-    this.nextTextureUnit += 1;
   }
 
   public compileShaderProgram(fsSource: string, node: GraphNode): void {
@@ -451,7 +451,7 @@ export class Renderer {
   }
 }
 
-export const RendererContext = createContext<Renderer>(null as unknown as Renderer);
+export const RendererContext = createContext<Renderer>((null as unknown) as Renderer);
 
 function isPowerOf2(value: number) {
   return (value & (value - 1)) === 0;
