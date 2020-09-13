@@ -1,4 +1,4 @@
-import { BinaryOpExpr, BinaryOperator, Expr, castIfNeeded } from '../Expr';
+import { BinaryOpExpr, BinaryOperator, Expr } from '../Expr';
 import { DataType } from '../../operators';
 import { glType } from '../../operators/DataType';
 import { OutputChunk, fcall, flat, parens, stmt, infix } from '../OutputChunk';
@@ -8,30 +8,24 @@ export function generate(expr: Expr): OutputChunk {
   switch (expr.kind) {
     case 'assign': {
       // Bind the '=' more tightly to the first segment
-      return stmt(
-        infix('=', generate(expr.left), generate(castIfNeeded(expr.right, expr.left.type)))
-      );
+      return stmt(infix('=', generate(expr.left), generate(expr.right)));
     }
 
-    case 'call': {
-      const fnSig = expr.callable.type[0];
+    case 'ovcall': {
+      const fnSig = expr.callable.type;
       if (expr.args.length !== fnSig.args.length) {
         throw Error(`Argument length mismatch: ${expr.callable.name}`);
       }
       return fcall(
         expr.callable.name,
-        expr.args.map((arg, index) => generate(castIfNeeded(arg, fnSig.args[index])))
+        expr.args.map((arg, index) => generate(arg))
       );
     }
 
     case 'deflocal': {
       if (expr.init) {
         // Bind the '=' more tightly to the first segment
-        return stmt(infix(
-          '=',
-          flat(glType(expr.type), ' ', expr.name),
-          generate(castIfNeeded(expr.init, expr.type)),
-        ));
+        return stmt(infix('=', flat(glType(expr.type), ' ', expr.name), generate(expr.init)));
       } else {
         return flat(glType(expr.type), ' ', expr.name, ';');
       }
@@ -105,27 +99,9 @@ export function generate(expr: Expr): OutputChunk {
         return generate(expr);
       };
 
-      let leftType = expr.type;
-      let rightType = expr.type;
-
-      if (expr.op === 'mul' || expr.op === 'add') {
-        if (
-          expr.type === DataType.VEC2 ||
-          expr.type === DataType.VEC3 ||
-          expr.type === DataType.VEC4
-        ) {
-          if (expr.left.type === DataType.FLOAT) {
-            leftType = DataType.FLOAT;
-          }
-          if (expr.right.type === DataType.FLOAT) {
-            rightType = DataType.FLOAT;
-          }
-        }
-      }
-
       // TODO: Test that this works
-      const left = parensIfNeeded(castIfNeeded(expr.left, leftType), expr);
-      const right = parensIfNeeded(castIfNeeded(expr.right, rightType), expr);
+      const left = parensIfNeeded(expr.left, expr);
+      const right = parensIfNeeded(expr.right, expr);
       return flat(left, operator[expr.op], right);
     }
 

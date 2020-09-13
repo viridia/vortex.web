@@ -1,9 +1,9 @@
-import { DataType } from './DataType';
-import { Expr, literal } from '../render/Expr';
+import { Expr } from '../render/Expr';
 import { GraphNode } from '../graph';
 import { Input } from './Input';
 import { Output } from './Output';
 import { Parameter } from './Parameter';
+import { vec4 } from '../render/glIntrinsics';
 
 const EMPTY_SET = new Set<string>();
 
@@ -31,7 +31,7 @@ export abstract class Operator {
 
   /** Return the expression for this node. */
   public getCode(node: GraphNode): Expr {
-    return literal('vec4(0.0, 0.0, 0.0, 0.0)', DataType.VEC4);
+    return vec4(0, 0, 0, 1);
   }
 
   /** Locate an operator input by id. */

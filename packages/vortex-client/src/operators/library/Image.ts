@@ -1,7 +1,8 @@
 import { DataType, Operator, Output, Parameter } from '..';
-import { Expr, defineFn, literal, refTexCoords, refUniform } from '../../render/Expr';
+import { Expr, defineFn, refTexCoords, refUniform } from '../../render/Expr';
 import { GraphNode } from '../../graph';
 import { makeFunctionType } from '../FunctionDefn';
+import { vec4 } from '../../render/glIntrinsics';
 
 export const texture = defineFn({
   name: 'texture',
@@ -36,16 +37,8 @@ class Image extends Operator {
     if (node.paramValues.has('image')) {
       return texture(refUniform('image', DataType.IMAGE, node), refTexCoords());
     }
-    return literal('vec4(0.0, 0.0, 0.0, 0.0)', DataType.VEC4);
+    return vec4(0.5, 0.5, 0.5, 1);
   }
-
-  // public readOutputValue(assembly: ShaderAssembly, node: GraphNode, out: string, uv: Expr): Expr {
-  //   return assembly.call(
-  //     'texture', [
-  //       assembly.uniform(node, 'image'),
-  //       uv,
-  //     ], DataType.VEC4);
-  // }
 }
 
 export default new Image();

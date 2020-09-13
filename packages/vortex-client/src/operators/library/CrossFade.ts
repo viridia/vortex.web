@@ -1,7 +1,8 @@
 import { DataType, Input, Operator, Output, Parameter } from '..';
-import { Expr, defineFn, literal, refTexCoords, refUniform } from '../../render/Expr';
+import { Expr, defineFn, refTexCoords, refUniform } from '../../render/Expr';
 import { GraphNode } from '../../graph';
 import { makeFunctionType } from '../FunctionDefn';
+import { vec4 } from '../../render/glIntrinsics';
 
 const IMPORTS = new Set(['crossfade']);
 
@@ -62,7 +63,7 @@ class CrossFade extends Operator {
 
   public getCode(node: GraphNode): Expr {
     if (!node.getInputTerminal('in').connection) {
-      return literal('vec4(0.5, 0.5, 0.5, 1.0)', DataType.VEC4);
+      return vec4(0.5, 0.5, 0.5, 1);
     }
     return crossfade(
       refUniform('in', DataType.IMAGE, node),

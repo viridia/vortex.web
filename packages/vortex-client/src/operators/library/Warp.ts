@@ -12,6 +12,7 @@ import {
   subtract,
 } from '../../render/Expr';
 import { GraphNode } from '../../graph';
+import { vec2 } from '../../render/glIntrinsics';
 
 class Warp extends Operator {
   public readonly inputs: Input[] = [
@@ -69,7 +70,7 @@ class Warp extends Operator {
               literal('0.5', DataType.VEC2),
               DataType.VEC2
             ),
-            literal('vec2(1.0, -1.0)', DataType.VEC2),
+            vec2(1, -1),
             DataType.VEC2
           ),
           intensity,

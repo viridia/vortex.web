@@ -1,14 +1,8 @@
 import { DataType } from '../../operators';
-import {
-  Expr,
-  castIfNeeded,
-  defLocal,
-  literal,
-  refLocal,
-  defaultValue,
-} from './../Expr';
+import { Expr, castIfNeeded, defLocal, refLocal, defaultValue, ExprOrLiteral } from './../Expr';
+import { FunctionSignature, FunctionDefn } from '../../operators/FunctionDefn';
 
-let textureCoords: Expr = literal('vTextureCoord', DataType.VEC2);
+let textureCoords: Expr = refLocal('vTextureCoord', DataType.VEC2);
 
 export function transform(expr: Expr, out: Expr[]): void {
   let tmpVarIndex = 1;
@@ -18,7 +12,7 @@ export function transform(expr: Expr, out: Expr[]): void {
     switch (expr.kind) {
       case 'assign': {
         const left = visit(expr.left);
-        const right = visit(expr.right);
+        const right = castIfNeeded(visit(expr.right), expr.left.type);
         if (expr.left === left && expr.right === right) {
           return expr;
         } else {
@@ -27,16 +21,17 @@ export function transform(expr: Expr, out: Expr[]): void {
       }
 
       case 'call': {
-        const args = expr.args.map(arg => {
-          if (typeof arg === 'number' || typeof arg === 'string') {
-            return arg;
-          }
-          return visit(arg);
-        });
-        if (expr.type !== DataType.OTHER && args.every((arg, index) => arg === expr.args[index])) {
-          return expr;
-        }
-        return { ...expr, args, type: expr.callable.type[0].result };
+        const argValues = expr.args.map(arg =>
+          typeof arg === 'number' || typeof arg === 'string' ? arg : visit(arg)
+        );
+        const fnSig = findOverload(expr.callable, argValues);
+        const args = argValues.map((arg, index) => castIfNeeded(arg, fnSig.args[index]));
+        return {
+          kind: 'ovcall',
+          callable: { name: expr.callable.name, type: fnSig },
+          args,
+          type: fnSig.result,
+        };
       }
 
       case 'reflocal':
@@ -49,7 +44,7 @@ export function transform(expr: Expr, out: Expr[]): void {
         if (textureCoords.kind === 'reftexcoords') {
           throw Error('Bad texture coords');
         }
-        return visit(textureCoords);
+        return textureCoords;
       }
 
       case 'refinput': {
@@ -111,8 +106,27 @@ export function transform(expr: Expr, out: Expr[]): void {
       }
 
       case 'binop': {
-        const left = visit(expr.left);
-        const right = visit(expr.right);
+        let leftType = expr.type;
+        let rightType = expr.type;
+
+        // GLSL allows multiplying or adding a vector by a scalar.
+        if (expr.op === 'mul' || expr.op === 'add') {
+          if (
+            expr.type === DataType.VEC2 ||
+            expr.type === DataType.VEC3 ||
+            expr.type === DataType.VEC4
+          ) {
+            if (expr.left.type === DataType.FLOAT) {
+              leftType = DataType.FLOAT;
+            }
+            if (expr.right.type === DataType.FLOAT) {
+              rightType = DataType.FLOAT;
+            }
+          }
+        }
+
+        const left = castIfNeeded(visit(expr.left), leftType);
+        const right = castIfNeeded(visit(expr.right), rightType);
         if (left === expr.left && right === expr.right) {
           return expr;
         } else {
@@ -158,4 +172,39 @@ function isSimpleExpr(expr: Expr): boolean {
     default:
       return false;
   }
+}
+
+function findOverload(callable: FunctionDefn, args: ExprOrLiteral[]): FunctionSignature {
+  for (const sig of callable.type) {
+    if (sig.args.length === args.length) {
+      if (args.every((arg, index) => canCast(arg, sig.args[index]))) {
+        return sig;
+      }
+    }
+  }
+
+  console.error(args);
+  throw Error(`No overload found for function: ${callable.name}`);
+}
+
+function canCast(expr: ExprOrLiteral, type: DataType): boolean {
+  if (typeof expr === 'string') {
+    expr = Number(expr);
+  }
+
+  if (typeof expr === 'number') {
+    if (type === DataType.FLOAT) {
+      return true;
+    } else if (type === DataType.INTEGER) {
+      return Math.fround(expr) === expr;
+    } else {
+      return false;
+    }
+  }
+
+  if (expr.type === type) {
+    return true;
+  }
+
+  return false;
 }

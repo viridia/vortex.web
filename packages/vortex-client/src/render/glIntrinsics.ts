@@ -5,61 +5,115 @@ import { makeFunctionType } from '../operators/FunctionDefn';
 
 export const vec2 = defineFn({
   name: 'vec2',
-  type: makeFunctionType({
-    result: DataType.VEC2,
-    args: [DataType.FLOAT, DataType.FLOAT],
-  }),
+  type: makeFunctionType([
+    {
+      result: DataType.VEC2,
+      args: [DataType.FLOAT, DataType.FLOAT],
+    },
+    {
+      result: DataType.VEC2,
+      args: [DataType.FLOAT],
+    },
+  ]),
 });
 
 export const vec3 = defineFn({
   name: 'vec3',
-  type: makeFunctionType({
-    result: DataType.VEC3,
-    args: [DataType.FLOAT, DataType.FLOAT, DataType.FLOAT],
-  }),
-});
-
-export const vec3_2_1 = defineFn({
-  name: 'vec3',
-  type: makeFunctionType({
-    result: DataType.VEC3,
-    args: [DataType.VEC2, DataType.FLOAT],
-  }),
+  type: makeFunctionType([
+    {
+      result: DataType.VEC3,
+      args: [DataType.FLOAT, DataType.FLOAT, DataType.FLOAT],
+    },
+    {
+      result: DataType.VEC3,
+      args: [DataType.VEC2, DataType.FLOAT],
+    },
+    {
+      result: DataType.VEC3,
+      args: [DataType.FLOAT, DataType.VEC2],
+    },
+    {
+      result: DataType.VEC3,
+      args: [DataType.FLOAT],
+    },
+  ]),
 });
 
 export const vec4 = defineFn({
   name: 'vec4',
-  type: makeFunctionType({
-    result: DataType.VEC4,
-    args: [DataType.FLOAT, DataType.FLOAT, DataType.FLOAT, DataType.FLOAT],
-  }),
-});
-
-export const vec4_3_1 = defineFn({
-  name: 'vec4',
-  type: makeFunctionType({
-    result: DataType.VEC4,
-    args: [DataType.VEC3, DataType.FLOAT],
-  }),
+  type: makeFunctionType([
+    {
+      result: DataType.VEC4,
+      args: [DataType.FLOAT, DataType.FLOAT, DataType.FLOAT, DataType.FLOAT],
+    },
+    {
+      result: DataType.VEC4,
+      args: [DataType.VEC2, DataType.FLOAT, DataType.FLOAT],
+    },
+    {
+      result: DataType.VEC4,
+      args: [DataType.FLOAT, DataType.VEC2, DataType.FLOAT],
+    },
+    {
+      result: DataType.VEC4,
+      args: [DataType.FLOAT, DataType.FLOAT, DataType.VEC2],
+    },
+    {
+      result: DataType.VEC4,
+      args: [DataType.VEC3, DataType.FLOAT],
+    },
+    {
+      result: DataType.VEC4,
+      args: [DataType.FLOAT, DataType.VEC3],
+    },
+    {
+      result: DataType.VEC4,
+      args: [DataType.VEC2, DataType.VEC2],
+    },
+    {
+      result: DataType.VEC4,
+      args: [DataType.FLOAT],
+    },
+  ]),
 });
 
 export const fract = defineFn({
   name: 'fract',
-  type: makeFunctionType({
-    result: DataType.FLOAT,
-    args: [DataType.FLOAT],
-  }),
+  type: makeFunctionType([
+    {
+      result: DataType.FLOAT,
+      args: [DataType.FLOAT],
+    },
+    {
+      result: DataType.VEC2,
+      args: [DataType.VEC2],
+    },
+    {
+      result: DataType.VEC3,
+      args: [DataType.VEC3],
+    },
+    {
+      result: DataType.VEC4,
+      args: [DataType.VEC4],
+    },
+  ]),
 });
 
-export const normalize_3 = defineFn({
+export const normalize = defineFn({
   name: 'normalize',
-  type: makeFunctionType({
+  type: makeFunctionType([{
+    result: DataType.VEC2,
+    args: [DataType.VEC2],
+  }, {
     result: DataType.VEC3,
     args: [DataType.VEC3],
-  }),
+  }, {
+    result: DataType.VEC4,
+    args: [DataType.VEC4],
+  }]),
 });
 
-export const cross_3 = defineFn({
+export const cross = defineFn({
   name: 'cross',
   type: makeFunctionType({
     result: DataType.VEC3,

@@ -252,6 +252,7 @@ export const fork = (value: Expr, name: string): ForkExpr => ({
 export type Expr =
   | AssignExpr
   | CallExpr
+  | OverloadCallExpr
   | LocalDefn
   | RefLocalExpr
   | RefUniformExpr

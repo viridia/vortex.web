@@ -13,7 +13,7 @@ import {
   refUniform,
 } from '../../render/Expr';
 import { GraphNode } from '../../graph';
-import { cross_3, normalize_3, vec3_2_1, vec4_3_1 } from '../../render/glIntrinsics';
+import { cross, normalize, vec3, vec4 } from '../../render/glIntrinsics';
 import { makeFunctionType } from '../FunctionDefn';
 
 export const dFdx = defineFn({
@@ -85,39 +85,19 @@ Treating the grayscale input as a height map, computes normals.
       ),
       'h'
     );
-    const dx = dFdx(vec3_2_1(uv, h));
-    const dy = dFdy(vec3_2_1(uv, h));
-    const normal = normalize_3(cross_3(dx, dy));
+    const dx = dFdx(vec3(uv, h));
+    const dy = dFdy(vec3(uv, h));
+    const normal = normalize(cross(dx, dy));
 
-    return vec4_3_1(
+    return vec4(
       add(
-        multiply(normal, literal('vec3(0.5, 0.5, -0.5)', DataType.VEC3), DataType.VEC3),
+        multiply(normal, vec3(0.5, 0.5, -0.5), DataType.VEC3),
         literal('0.5', DataType.FLOAT),
         DataType.VEC3
       ),
       literal('1.0', DataType.FLOAT)
     );
   }
-
-  // public readOutputValue(assembly: ShaderAssembly, node: GraphNode, out: string, uv: Expr): Expr {
-  //   const inputA = assembly.readInputValue(node, 'in', uv);
-  //   const scale = this.uniformName(node.id, 'scale');
-  //   const t = `${this.localPrefix(node.id)}_t`;
-  //   const h = `${this.localPrefix(node.id)}_h`;
-  //   const dx = `${this.localPrefix(node.id)}_dx`;
-  //   const dy = `${this.localPrefix(node.id)}_dy`;
-  //   const normal = `${this.localPrefix(node.id)}_normal`;
-  //   assembly.assign(t, 'vec4', inputA);
-  //   assembly.assign(h, 'float',
-  //       assembly.literal(`(${t}.x + ${t}.y + ${t}.z) * ${scale} / 3.0`, DataType.FLOAT));
-  //   assembly.assign(dx, 'vec3',
-  //       assembly.literal(`dFdx(vec3(vTextureCoord, ${h}))`, DataType.VEC3));
-  //   assembly.assign(dy, 'vec3',
-  //       assembly.literal(`dFdy(vec3(vTextureCoord, ${h}))`, DataType.VEC3));
-  //   assembly.assign(normal, 'vec3',
-  //       assembly.literal(`normalize(cross(${dx}, ${dy}))`, DataType.VEC3));
-  //   return assembly.literal(`vec4(${normal} * vec3(0.5, 0.5, -0.5) + 0.5, 1.0)`, DataType.VEC4);
-  // }
 
   constructor() {
     super('filter', 'Normal Map', 'filter_normal_map');
