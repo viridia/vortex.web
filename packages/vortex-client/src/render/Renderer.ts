@@ -318,7 +318,7 @@ export class Renderer {
 
   public compileShaderProgram(fsSource: string, node: GraphNode): void {
     const gl = this.gl;
-    const fragmentShader = this.compileShader(gl.FRAGMENT_SHADER, fsSource);
+    const fragmentShader = this.compileShader(gl.FRAGMENT_SHADER, fsSource, node);
     if (!fragmentShader) {
       console.error('Compilation failed');
       console.debug(fsSource);
@@ -331,6 +331,7 @@ export class Renderer {
       // console.log('Shader compiler log: ' + compilationLog);
     }
 
+    node.clearError();
     if (!this.vertexShader) {
       return;
     }
@@ -349,10 +350,10 @@ export class Renderer {
 
     // If creating the shader program failed, alert
     if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-      alert('Unable to initialize the shader program: ' + gl.getProgramInfoLog(shaderProgram));
+      node.setError(gl.getProgramInfoLog(shaderProgram));
       return;
     }
-
+    node.clearError();
     node.ensureGLResources().fragment = fragmentShader;
     node.ensureGLResources().program = shaderProgram;
   }
@@ -407,14 +408,19 @@ export class Renderer {
     image.src = url;
   }
 
-  private compileShader(type: number, source: string): WebGLShader | null {
+  private compileShader(type: number, source: string, node?: GraphNode): WebGLShader | null {
     const gl = this.gl;
     const shader = gl.createShader(type)!;
 
     gl.shaderSource(shader, source);
     gl.compileShader(shader);
     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-      alert('An error occurred compiling the shaders: ' + gl.getShaderInfoLog(shader));
+      const errorMessage = gl.getShaderInfoLog(shader);
+      if (node) {
+        node.setError(errorMessage);
+      } else {
+        alert('An error occurred compiling the shaders: ' + errorMessage);
+      }
       gl.deleteShader(shader);
       return null;
     }

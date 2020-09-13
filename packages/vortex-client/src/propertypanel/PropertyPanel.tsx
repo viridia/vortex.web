@@ -5,7 +5,7 @@ import { Graph, GraphNode } from '../graph';
 import { NodeActions } from './NodeActions';
 import { PropertyEditor } from '../propertypanel/PropertyEditor';
 import { RenderedImage } from '../render/RenderedImage';
-import { colors } from '../styles';
+import { colors, roundedScrollbars } from '../styles';
 import { observer } from 'mobx-react';
 
 const PropertyPanelElt = styled.aside`
@@ -18,6 +18,18 @@ const PropertyPanelElt = styled.aside`
 
 const RenderedImagePreview = styled(RenderedImage)`
   margin: 4px;
+`;
+
+const NodeErrorDisplay = styled.div`
+  ${roundedScrollbars}
+  font-family: monospace;
+  width: 320px;
+  height: 320px;
+  margin: 4px;
+  padding: 8px;
+  background-color: ${colors.errorTextBg};
+  overflow: auto;
+  white-space: pre;
 `;
 
 interface Props {
@@ -56,9 +68,12 @@ export class PropertyPanel extends Component<Props, State> {
             onLock={this.onLock}
           />
         )}
-        {selectedNode && (
-          <RenderedImagePreview node={previewNode} width={320} height={320} tiling={tiling} />
-        )}
+        {selectedNode &&
+          (selectedNode.error ? (
+            <NodeErrorDisplay>{selectedNode.error}</NodeErrorDisplay>
+          ) : (
+            <RenderedImagePreview node={previewNode} width={320} height={320} tiling={tiling} />
+          ))}
       </PropertyPanelElt>
     );
   }

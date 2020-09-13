@@ -53,4 +53,6 @@ export const colors = {
   buttonLoginGoogleBg: '#dd4b39',
   buttonLoginGitHubBg: '#464646',
   buttonLoginFacebookBg: '#3b5998',
+
+  errorTextBg: darken(.2, shades.coolGray),
 };

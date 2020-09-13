@@ -3,7 +3,7 @@ import { DataType, Operator, Parameter } from '../operators';
 import { Expr } from '../render/Expr';
 import { GLResources } from '../render/GLResources';
 import { InputTerminal } from './InputTerminal';
-import { ObservableMap, computed, observable } from 'mobx';
+import { ObservableMap, computed, observable, action } from 'mobx';
 import { OutputTerminal } from './OutputTerminal';
 import { Renderer } from '../render/Renderer';
 import { ShaderAssembly } from '../render/ShaderAssembly';
@@ -34,6 +34,9 @@ export class GraphNode {
   // GL resources allocated by the operator for this node.
   public glResources: GLResources | undefined;
   public prevSource: string = '';
+
+  // Report errors compiling this node.
+  @observable private errorMsg: string | null = null;
 
   private generator: ShaderAssembly;
 
@@ -224,6 +227,20 @@ export class GraphNode {
   @computed
   public get outputCode(): Expr {
     return this.operator.getCode(this);
+  }
+
+  @action
+  setError(errorMessage: string | null) {
+    this.errorMsg = errorMessage;
+  }
+
+  @action
+  clearError() {
+    this.errorMsg = null;
+  }
+
+  public get error(): string | null {
+    return this.errorMsg;
   }
 
   // Return the (observable) set of imports needed to compile the code for this node

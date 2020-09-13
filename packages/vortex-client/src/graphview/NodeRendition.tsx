@@ -42,6 +42,24 @@ const NodePreview = styled.section`
   }
 `;
 
+const ErrorBadge = styled.div`
+  display: flex;
+  box-shadow: 1px 3px 5px rgba(0, 0, 0, 0.9);
+  border: 1px solid #400;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  position: absolute;
+  color: white;
+  font-weight: bold;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  background-color: #f00;
+  right: 8px;
+  top: -11px;
+`;
+
 interface Props {
   node: GraphNode;
   graph: Graph;
@@ -65,6 +83,7 @@ export const NodeRendition: FC<Props> = observer(({ node, graph }) => {
         <NodePreview className="preview">
           <RenderedImage width={80} height={80} node={node} />
         </NodePreview>
+        {node.error && <ErrorBadge>!</ErrorBadge>}
       </NodeBody>
       {node.inputs &&
         node.inputs.map(input => (

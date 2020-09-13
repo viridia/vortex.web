@@ -1,6 +1,5 @@
 # TODO:
 
-* Better reporting of shader errors.
 * Make type conversion less agressive
 * Get rid of 'typecast' node type.
 * Allow infix operators to accept number literals.
