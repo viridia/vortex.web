@@ -1,8 +1,10 @@
 # TODO:
 
 * Better reporting of shader errors.
+* Make type conversion less agressive
+* Get rid of 'typecast' node type.
+* Allow infix operators to accept number literals.
 * Finish migration to pointerDrag2
-* MobX Exception in renderer (set texture)
 * Calling noise twice.
 * Top-level package and build scripts
 * Cloud storage:
@@ -23,7 +25,6 @@
 * Log scale controls - shininess is a good example
 * PBR shader
 * Output type conversion - clean up and make consistent.
-* Enter key to close dialogs.
 * Graph Descriptions / Markdown
 
 * https://github.com/Jam3/glsl-fast-gaussian-blur
@@ -31,6 +32,7 @@
 # Operators to do:
   * Transforms:
     * Mirror
+    * Rotate 90
   * Filters:
     * Combine
     * Emboss - simpler than illuminate.
