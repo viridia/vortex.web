@@ -173,7 +173,7 @@ Blends two source images, similar to layer operations in GIMP or PhotoShop.
       return vec4(0.5, 0.5, 0.5, 1);
     }
 
-    const a = refInput('a', DataType.VEC4, node, tuv);
+    const a = fork(refInput('a', DataType.VEC4, node, tuv), 'a');
     const b = refInput('b', DataType.VEC4, node, tuv);
     const strength = refUniform('strength', DataType.FLOAT, node);
     const ca = getAttr(a, 'rgb', DataType.VEC3);

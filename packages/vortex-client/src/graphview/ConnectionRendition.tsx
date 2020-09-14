@@ -5,27 +5,41 @@ import { Connection, Terminal } from '../graph';
 import { colors } from '../styles';
 import { darken, desaturate, transparentize } from 'polished';
 import { observer } from 'mobx-react';
+import { DataType } from '../operators';
 
 const Connector = styled.path`
-  stroke-width: 6px;
+  stroke-width: 5px;
   stroke: ${colors.connectorStroke};
   fill: transparent;
   cursor: move;
   .pending & {
     stroke: ${darken(0.1, desaturate(0.5, colors.connectorStroke))};
   }
+
+  g.vector-type > & {
+    stroke: ${colors.connectorStrokeVector};
+    stroke-width: 6px;
+  }
 `;
 
 const ConnectorShadow = styled.path`
-  stroke-width: 9px;
+  stroke-width: 8px;
   stroke: ${transparentize(0.8, colors.connectorShadowStroke)};
   fill: transparent;
+
+  g.vector-type > & {
+    stroke-width: 9px;
+  }
 `;
 
 const ConnectorOutline = styled.path`
-  stroke-width: 9px;
+  stroke-width: 8px;
   stroke: ${colors.connectorOutlineStroke};
   fill: transparent;
+
+  g.vector-type > & {
+    stroke-width: 9px;
+  }
 `;
 
 interface Props {
@@ -60,10 +74,11 @@ export const ConnectionRendition: FC<Props> = observer(
       return null;
     }
 
+    const isVectorType = ts?.node.operator.getOutput(ts.id).type !== DataType.FLOAT;
     return (
       <g
         onPointerDown={onPointerDown}
-        className={classNames({ pending })}
+        className={classNames({ pending }, isVectorType && 'vector-type' )}
         data-source={ts && `${ts.node.id}:${ts.id}`}
         data-sink={te && `${te.node.id}:${te.id}`}
       >

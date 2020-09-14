@@ -23,9 +23,10 @@ export const colors = {
 
   terminalCaption: '#eee',
 
-  connectorStroke: '#4c4',
+  connectorStroke: '#797',
   connectorOutlineStroke: '#000',
   connectorShadowStroke: '#000',
+  connectorStrokeVector: '#4c4',
 
   headerBg: shades.coolGray7,
   headerColor: '#eee',
