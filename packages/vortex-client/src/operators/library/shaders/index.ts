@@ -1,8 +1,9 @@
-import blend from './blend.glsl';
+import { blend_screen, blend_overlay, blend_dodge, blend_burn } from './blend.glsl';
 import blur from './blur.glsl';
 import bricks from './bricks.glsl';
 import cellular from './cellular.glsl';
 import cellularHex from './cellular_hex.glsl';
+import clamp_color from './clamp_color.glsl';
 import colorAdjust from './color-adjust.glsl';
 import crossfade from './crossfade.glsl';
 import gradient from './gradient.glsl';
@@ -22,11 +23,15 @@ import triangles from './triangles.glsl';
 import waves from './waves.glsl';
 
 export const byName: { [name: string]: string } = {
-  blend,
+  blend_screen,
+  blend_overlay,
+  blend_dodge,
+  blend_burn,
   blur,
   bricks,
   cellular,
   cellular_hex: cellularHex,
+  clamp_color: clamp_color,
   'color-adjust': colorAdjust,
   crossfade,
   'gradient-color': gradientColor,

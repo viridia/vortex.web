@@ -1,6 +1,5 @@
 import { DataType } from '../operators';
 import { GraphNode } from '../graph';
-import { glType } from '../operators/DataType';
 import { FunctionDefn, OverloadDefn } from '../operators/FunctionDefn';
 
 export type ExprKind =
@@ -273,73 +272,4 @@ export function defineFn(callable: FunctionDefn): (...args: ExprOrLiteral[]) => 
     type: DataType.OTHER,
     callable,
   });
-}
-
-export function castIfNeeded(expr: ExprOrLiteral, type: DataType): Expr {
-  if (typeof expr === 'number') {
-    if (type === DataType.FLOAT) {
-      return literal(formatFloat(expr), type);
-    } else if (type === DataType.INTEGER) {
-      return literal(formatInteger(expr), type);
-    } else {
-      throw Error(`Invalid literal type: ${DataType[type]}: ${JSON.stringify(expr)}`);
-    }
-  } else if (typeof expr === 'string') {
-    if (type === DataType.FLOAT) {
-      return literal(formatFloat(Number(expr)), type);
-    } else if (type === DataType.INTEGER) {
-      return literal(formatInteger(Number(expr)), type);
-    } else {
-      throw Error(`Invalid literal type: ${DataType[type]}: ${JSON.stringify(expr)}`);
-    }
-  } else if (expr.type === type || glType(expr.type) === glType(type)) {
-    return expr;
-  } else {
-    return typeCast(expr, type);
-  }
-}
-
-function formatFloat(value: number): string {
-  if (isNaN(value)) {
-    throw Error('Not a number');
-  }
-
-  const str = String(value);
-  if (!str.includes('.')) {
-    return str + '.';
-  } else {
-    if (str.startsWith('0.') && str.length > 2) {
-      return str.slice(1);
-    }
-    return str;
-  }
-}
-
-function formatInteger(value: number): string {
-  if (isNaN(value)) {
-    throw Error('Not a number');
-  }
-
-  if (value !== Math.fround(value)) {
-    throw Error('Not an integer');
-  }
-
-  const result = String(value);
-  if (result.includes('.')) {
-    throw Error(`Invalid integer literal: ${value}`);
-  }
-
-  return result;
-}
-
-const DEFAULT_VALUE: { [key: number]: LiteralNode } = {
-  [DataType.INTEGER]: literal('0', DataType.INTEGER),
-  [DataType.FLOAT]: literal('0.0', DataType.FLOAT),
-  [DataType.VEC2]: literal('vec2(0.0, 0.0)', DataType.VEC2),
-  [DataType.VEC3]: literal('vec3(0.0, 0.0, 0.0)', DataType.VEC3),
-  [DataType.VEC4]: literal('vec4(0.0, 0.0, 0.0, 0.0)', DataType.VEC4),
-};
-
-export function defaultValue(type: DataType) {
-  return DEFAULT_VALUE[type];
 }

@@ -1,9 +1,10 @@
 # TODO:
 
-* Make type conversion less agressive
-* Get rid of 'typecast' node type.
-* Allow infix operators to accept number literals.
 * Calling noise twice.
+* Drag multiple selection.
+* Make type conversion less agressive
+  * Get rid of 'typecast' node type.
+* Allow infix operators to accept number literals.
 * Top-level package and build scripts
 * Cloud storage:
   * List recent documents
@@ -15,7 +16,6 @@
   * UV not fully supported
   * See if we can remove some of the type params that are passed in
 * Limit operator dragging to document size
-* Drag multiple selection.
 * Make brick edges smoother - gamma correction?
 * Cached signals not working.
 * Upload JSON files
