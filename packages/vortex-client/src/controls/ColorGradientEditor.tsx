@@ -4,7 +4,7 @@ import { ColorGradient, ColorStop, RGBAColor, formatRGBAColor } from '../render/
 import { ColorPicker } from './ColorPicker';
 import { ColorStopDragger } from './ColorStopDragger';
 import { ComboSlider } from './ComboSlider';
-import { DragState, usePointerDrag } from '../hooks/usePointerDrag2';
+import { DragState, usePointerDrag } from '../hooks/usePointerDrag';
 import { colors } from '../styles';
 import { observer } from 'mobx-react';
 import { runInAction } from 'mobx';

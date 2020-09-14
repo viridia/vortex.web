@@ -3,7 +3,6 @@
 * Make type conversion less agressive
 * Get rid of 'typecast' node type.
 * Allow infix operators to accept number literals.
-* Finish migration to pointerDrag2
 * Calling noise twice.
 * Top-level package and build scripts
 * Cloud storage:

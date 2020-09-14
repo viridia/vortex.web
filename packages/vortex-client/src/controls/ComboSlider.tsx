@@ -196,7 +196,7 @@ export const ComboSlider: FC<Props> = ({
     };
   }, [dragOrigin, dragValue, logScale, max, min, setValue, value]);
 
-  const setCenterEl = usePointerDrag(dragCallbacks);
+  const dragMethods = usePointerDrag(dragCallbacks);
 
   const onDoubleClick = useCallback(
     () => {
@@ -259,7 +259,7 @@ export const ComboSlider: FC<Props> = ({
         onChange={buttonMethods.onLeftChange}
         onHeld={buttonMethods.onLeftHeld}
       />
-      <ComboSliderContainer className="center" onDoubleClick={onDoubleClick} ref={setCenterEl}>
+      <ComboSliderContainer {...dragMethods} className="center" onDoubleClick={onDoubleClick} >
         <ComboSliderName className="name">{name}: </ComboSliderName>
         <span className="value">{displayVal}</span>
         <ComboSliderInput

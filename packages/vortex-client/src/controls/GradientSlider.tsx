@@ -16,7 +16,7 @@ const GradientSliderElt = styled.div`
   user-select: none;
 
   &.disabled {
-    opacity: .5;
+    opacity: 0.5;
     pointer-events: none;
   }
 `;
@@ -104,13 +104,13 @@ export const GradientSlider: FC<Props> = ({
     };
   }, [onChange, min, max]);
 
-  const ref = usePointerDrag(callbacks);
+  const dragMethods = usePointerDrag(callbacks);
   const gradient = `linear-gradient(to right, ${colors.join(', ')})`;
 
   return (
     <GradientSliderElt
+      {...dragMethods}
       className={classNames('gradient-slider', className, { disabled })}
-      ref={ref}
     >
       <GradientSliderBg className="bg">
         <div className="left" style={{ backgroundColor: colors[0] }} />

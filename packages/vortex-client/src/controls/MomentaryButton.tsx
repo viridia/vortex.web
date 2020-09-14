@@ -47,7 +47,7 @@ export const MomentaryButton: FC<Props> = memo(
       };
     }, [onChangeLatest]);
 
-    const setRef = usePointerDrag({ ...callbacks });
+    const dragMethods = usePointerDrag(callbacks);
 
     // Call `onHeld` callback continuously.
     useEffect(() => {
@@ -67,7 +67,7 @@ export const MomentaryButton: FC<Props> = memo(
     }, [isActive, delay, period, onHeld, inFirstInterval]);
 
     return (
-      <div ref={setRef} className={classNames(className, { active: isActive })}>
+      <div {...dragMethods} className={classNames(className, { active: isActive })}>
         {children}
       </div>
     );
