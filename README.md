@@ -10,6 +10,8 @@ The actual computation of the images is performed by the GPU using WebGL.
 
 ![screenshot](./doc/screenshot.png "Vortex UI")
 
+More examples [here](./doc/Examples.md).
+
 ## Running the application in the Cloud
 
 Go to https://vortex.run

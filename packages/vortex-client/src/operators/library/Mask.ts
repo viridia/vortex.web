@@ -9,7 +9,7 @@ export const mask = defineFn({
   name: 'mask',
   type: makeFunctionType({
     result: DataType.VEC4,
-    args: [DataType.VEC4, DataType.VEC4, DataType.VEC4, DataType.INTEGER],
+    args: [DataType.VEC4, DataType.VEC4, DataType.FLOAT, DataType.INTEGER],
   }),
 });
 
