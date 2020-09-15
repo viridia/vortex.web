@@ -63,7 +63,7 @@ export function generate(expr: Expr): OutputChunk {
           break;
         case DataType.VEC3:
           if (srcType === DataType.FLOAT) {
-            return flat('vec3(1.0, 1.0, 1.0) * ', generate(expr.value));
+            return infix('*', 'vec3(1., 1., 1.)', generate(expr.value));
           }
           break;
         default:

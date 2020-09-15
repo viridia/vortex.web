@@ -1,17 +1,21 @@
 # TODO:
 
-* Calling noise twice.
+* PBR shader
+* Emboss filter
+* Bug in blend - need a 'getParamValue' with defaults.
 * Drag multiple selection.
 * Make type conversion less agressive
   * Get rid of 'typecast' node type.
 * Allow infix operators to accept number literals.
 * Top-level package and build scripts
 * Cloud storage:
+  * More robust about accidental overwrites.
   * List recent documents
   * Garbage collection for image references. (Good idea!)
   * Make a local store option for images
     * Avoids need to upload everything to cloud.
   * Admin panel for user count, resource usage
+  * A way to delete items in the load list.
 * Type conversions for node outputs
   * UV not fully supported
   * See if we can remove some of the type params that are passed in
@@ -21,9 +25,8 @@
 * Upload JSON files
 * Undo / Redo
 * Log scale controls - shininess is a good example
-* PBR shader
-* Output type conversion - clean up and make consistent.
 * Graph Descriptions / Markdown
+* Output type conversion - clean up and make consistent.
 
 * https://github.com/Jam3/glsl-fast-gaussian-blur
 
@@ -41,7 +44,6 @@
     * Checker
     * Function
     * Tartan
-    * Waves
 
   * SVG filter types:
     * feColorMatrix

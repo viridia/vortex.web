@@ -4,14 +4,14 @@ import { PrintStream } from '../PrintStream';
 export function printToString(chunk: OutputChunk, maxWidth: number) {
   const ps = new PrintStream();
   ps.setMaxLineLength(maxWidth);
-  ps.setIndentLevel(1);
+  ps.setNextLineIndent(1);
   emit(ps, chunk);
   ps.breakLine();
   return ps.toString();
 }
 
 export function print(out: PrintStream, chunk: OutputChunk) {
-  out.setIndentLevel(1);
+  out.setNextLineIndent(1);
   emit(out, chunk);
   out.breakLine();
 }
@@ -21,7 +21,7 @@ export function emit(out: PrintStream, chunk: OutputChunk) {
     // No need for break, line will fit
     out.append(flatten(chunk));
   } else {
-    const saveIndent = out.getIndentLevel();
+    const saveIndent = out.getNextLineIndent();
     switch (chunk.type) {
       case 'parens':
         out.append('(');
@@ -39,9 +39,20 @@ export function emit(out: PrintStream, chunk: OutputChunk) {
         const [fn, ...args] = chunk.fragments;
         emit(out, fn);
         out.append('(');
+
+        // If the call only has one argument, and the argument will fit if broken,
+        // then don't break, let the argument break instead.
+        console.log(flatten(args[0]));
+        console.log(chunkHeadLength(args[0]));
+        if (args.length === 1 && out.canFit(chunkHeadLength(args[0]))) {
+          emit(out, args[0]);
+          out.append(')');
+          break;
+        }
+
         args.forEach((arg, index) => {
           if (args.length > 1) {
-            out.setIndentLevel(saveIndent + 1);
+            out.setNextLineIndent(saveIndent + 1);
             out.breakLine();
           }
           emit(out, arg);
@@ -49,7 +60,7 @@ export function emit(out: PrintStream, chunk: OutputChunk) {
             out.append(', ');
           }
         });
-        out.setIndentLevel(saveIndent);
+        out.setNextLineIndent(saveIndent);
         if (args.length > 1) {
           out.breakLine();
         }
@@ -62,17 +73,27 @@ export function emit(out: PrintStream, chunk: OutputChunk) {
 
       case 'infix': {
         const [oper, ...args] = chunk.fragments;
+
+        // Special case where 1st argument and operator and part of second argument can
+        // fit on one line.
+        if (args.length === 2 && out.canFit(chunkLength(args[0]) + 3 + chunkHeadLength(args[1]))) {
+          emit(out, args[0]);
+          emit(out, ` ${oper} `);
+          emit(out, args[1]);
+          break
+        }
+
         args.forEach((arg, index) => {
           if (index > 0) {
             emit(out, ` ${oper} `);
           }
           if (!out.canFit(chunkLength(arg))) {
-            out.setIndentLevel(saveIndent + 1);
+            out.setNextLineIndent(saveIndent + 1);
             out.breakLine();
           }
           emit(out, arg);
         });
-        out.setIndentLevel(saveIndent);
+        out.setNextLineIndent(saveIndent);
         break;
       }
 
@@ -86,13 +107,13 @@ export function emit(out: PrintStream, chunk: OutputChunk) {
 
 // Greedy line-breaking algorithm.
 function greedyWrap(out: PrintStream, fragments: OutputChunk[]) {
-  const saveIndent = out.getIndentLevel();
+  const saveIndent = out.getNextLineIndent();
   fragments.forEach((fragment, index) => {
     if (out.canFit(chunkLength(fragment))) {
       out.append(flatten(fragment));
     } else if (typeof fragment === 'string') {
       if (index > 0) {
-        out.setIndentLevel(saveIndent + 1);
+        out.setNextLineIndent(saveIndent + 1);
       }
       out.breakLine();
       out.append(fragment);
@@ -100,7 +121,7 @@ function greedyWrap(out: PrintStream, fragments: OutputChunk[]) {
       emit(out, fragment);
     }
   })
-  out.setIndentLevel(saveIndent);
+  out.setNextLineIndent(saveIndent);
 }
 
 function chunkLength(chunk: OutputChunk | OutputChunk[]): number {
@@ -133,33 +154,33 @@ function chunkLength(chunk: OutputChunk | OutputChunk[]): number {
   }
 }
 
-// function chunkHeadLength(chunk: OutputChunk | OutputChunk[]): number {
-//   if (typeof chunk === 'string') {
-//     return chunk.length;
-//   } else if (Array.isArray(chunk)) {
-//     return chunkLength(chunk[0]);
-//   } else {
-//     switch (chunk.type) {
-//       case 'parens':
-//       case 'brackets':
-//         return 1;
+function chunkHeadLength(chunk: OutputChunk | OutputChunk[]): number {
+  if (typeof chunk === 'string') {
+    return chunk.length;
+  } else if (Array.isArray(chunk)) {
+    return chunkLength(chunk[0]);
+  } else {
+    switch (chunk.type) {
+      case 'parens':
+      case 'brackets':
+        return 1;
 
-//       case 'fcall':
-//         return chunkLength(chunk.fragments[0]) + 1;
+      case 'fcall':
+        return chunkLength(chunk.fragments[0]) + 1;
 
-//       case 'flat':
-//         return chunkLength(chunk.fragments);
+      case 'flat':
+        return chunkLength(chunk.fragments);
 
-//       case 'infix': {
-//         const [oper, ...args] = chunk.fragments;
-//         return chunkLength(args[0]) + chunkLength(oper);
-//       }
+      case 'infix': {
+        const [oper, ...args] = chunk.fragments;
+        return chunkLength(args[0]) + chunkLength(oper);
+      }
 
-//       case 'stmt':
-//         return chunkHeadLength(chunk.fragments);
-//     }
-//   }
-// }
+      case 'stmt':
+        return chunkHeadLength(chunk.fragments);
+    }
+  }
+}
 
 function flatten(chunk: OutputChunk | OutputChunk[]): string {
   if (typeof chunk === 'string') {

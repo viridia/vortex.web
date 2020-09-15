@@ -23,7 +23,7 @@ export const colors = {
 
   terminalCaption: '#eee',
 
-  connectorStroke: '#797',
+  connectorStroke: '#47b',
   connectorOutlineStroke: '#000',
   connectorShadowStroke: '#000',
   connectorStrokeVector: '#4c4',

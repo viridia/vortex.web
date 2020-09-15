@@ -2,11 +2,11 @@ const MAX_COLS = 80;
 
 export class PrintStream {
   private out: string[] = [];
-  private line: string[] = [];
-  private lineLength = 0;
+  private currentLine: string[] = [];
+  private currentLineLength = 0;
   private maxLineLength = MAX_COLS;
-  private indentLevel = 1;
-  private nextIndentLevel = 1;
+  private currentLineIndent = 1;
+  private nextLineIndent = 1;
 
   public setMaxLineLength(maxLineLength: number) {
     this.maxLineLength = maxLineLength;
@@ -21,28 +21,33 @@ export class PrintStream {
   }
 
   public breakLine() {
-    if (this.line.length > 0) {
-      this.out.push('  '.repeat(this.indentLevel) + this.line.join('').trim());
-      this.line.length = 0;
-      this.lineLength = 0;
+    if (this.currentLine.length > 0) {
+      this.out.push('  '.repeat(this.currentLineIndent) + this.currentLine.join('').trim());
+      this.currentLine.length = 0;
+      this.currentLineLength = 0;
     }
-    this.indentLevel = this.nextIndentLevel;
+    this.currentLineIndent = this.nextLineIndent;
   }
 
   public canFit(length: number): boolean {
-    return this.indentLevel * 2 + this.lineLength + length < this.maxLineLength;
+    return this.currentLineIndent * 2 + this.currentLineLength + length < this.maxLineLength;
   }
 
   public append(text: string) {
-    this.lineLength += text.length;
-    this.line.push(text);
+    this.currentLineLength += text.length;
+    this.currentLine.push(text);
   }
 
-  public getIndentLevel(): number {
-    return this.nextIndentLevel;
+  public getCurrentLineIndent(): number {
+    return this.currentLineIndent;
   }
 
-  public setIndentLevel(indentLevel: number) {
-    this.nextIndentLevel = indentLevel;
+  public getNextLineIndent(): number {
+    return this.nextLineIndent;
+  }
+
+  /** Set the indent level for the next line after the current line. */
+  public setNextLineIndent(indentLevel: number) {
+    this.nextLineIndent = indentLevel;
   }
 }
