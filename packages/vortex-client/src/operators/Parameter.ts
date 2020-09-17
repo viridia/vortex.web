@@ -1,3 +1,4 @@
+import { GraphNode } from '../graph';
 import { DataType } from './DataType';
 
 export interface EnumValue {
@@ -31,5 +32,10 @@ export interface Parameter {
   noAlpha?: boolean;
   enumVals?: EnumValue[]; // For enumerations
   children?: Parameter[]; // If this is a group
-  // static?: boolean; // Indicates this is not a uniform, but affects shader code generation.
+
+  // Indicates that this is not a uniform, but occurs in the preprocessing (code generation) phase.
+  pre?: boolean;
+
+  // This parameter's value is derived from other parameters.
+  computed?: (node: GraphNode) => any;
 }

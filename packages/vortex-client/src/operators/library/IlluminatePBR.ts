@@ -2,11 +2,12 @@ import { DataType, Input, Operator, Output, Parameter } from '..';
 import { Expr, defineFn, fork, refInput, refTexCoords, refUniform } from '../../render/Expr';
 import { GraphNode } from '../../graph';
 import { makeFunctionType } from '../FunctionDefn';
+// import glsl from './glsl';
 
-const IMPORTS = new Set(['illuminate']);
+const IMPORTS = new Set(['illuminate_pbr']);
 
-export const illuminate = defineFn({
-  name: 'illuminate',
+export const illuminate_pbr = defineFn({
+  name: 'illuminate_pbr',
   type: makeFunctionType({
     result: DataType.VEC4,
     args: [
@@ -14,14 +15,15 @@ export const illuminate = defineFn({
       DataType.VEC4,
       DataType.VEC3,
       DataType.FLOAT,
-      DataType.VEC4,
+      DataType.FLOAT,
       DataType.VEC4,
       DataType.VEC4,
     ],
   }),
+  // body: illuminate_pbr_body,
 });
 
-class Illuminate extends Operator {
+class IlluminatePBR extends Operator {
   public readonly inputs: Input[] = [
     {
       id: 'in',
@@ -77,14 +79,24 @@ class Illuminate extends Operator {
       },
     },
     {
-      id: 'shininess',
-      name: 'Shininess',
+      id: 'roughness',
+      name: 'Roughness',
       type: DataType.FLOAT,
-      min: 1,
-      max: 100,
-      precision: 0,
+      min: 0,
+      max: 1,
+      precision: 2,
+      increment: 0.05,
+      default: 0.5,
+    },
+    {
+      id: 'metalness',
+      name: 'Metalness',
+      type: DataType.FLOAT,
+      min: 0,
+      max: 1,
+      precision: 2,
       increment: 1,
-      default: 10,
+      default: 0,
     },
     {
       id: 'ambient',
@@ -102,27 +114,20 @@ class Illuminate extends Operator {
       noAlpha: true,
       default: [0.5, 0.5, 0.5, 1.0],
     },
-    {
-      id: 'specular',
-      name: 'Specular Color',
-      type: DataType.VEC4,
-      editor: 'color',
-      noAlpha: true,
-      default: [0.5, 0.5, 0.5, 1.0],
-    },
   ];
 
   public readonly description = `
-Illuminate the input texture.
+Physically-based illumination.
 * **Azimuth** and **Elevation** control the direction of the light source.
-* **Shininess** controls the falloff for the specular highlight.
+* **Roughness** Roughness of the surface.
+* **Metalness** Metal-ness of the surface.
 * **Ambient Color** lights all surfaces regardless of their orientation.
 * **Diffuse Color** only lights surfaces oriented towards the light source.
 * **Specular Color** affects the color of the specular highlight.
 `;
 
   constructor() {
-    super('filter', 'Illuminate', 'filter_illuminate');
+    super('filter', 'Illuminate (PBR)', 'filter_illuminate_pbr');
   }
 
   public getImports(node: GraphNode): Set<string> {
@@ -131,7 +136,7 @@ Illuminate the input texture.
 
   public getCode(node: GraphNode): Expr {
     const tuv = fork(refTexCoords(), 'uv');
-    return illuminate(
+    return illuminate_pbr(
       refInput('in', DataType.VEC4, node, tuv),
       refInput('normal', DataType.VEC4, node, tuv),
       ...this.uniformParamList.map(param => refUniform(param.id, param.type, node))
@@ -139,4 +144,4 @@ Illuminate the input texture.
   }
 }
 
-export default new Illuminate();
+export default new IlluminatePBR();

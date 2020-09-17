@@ -9,6 +9,7 @@ export interface FunctionSignature {
 export interface FunctionDefn {
   name: string;
   type: FunctionSignature[];
+  body?: string;
 }
 
 /** Defines the name and type of a function overload. */

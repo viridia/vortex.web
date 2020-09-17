@@ -2,7 +2,6 @@ import { DataType } from '../../operators';
 import { Expr, defLocal, refLocal, ExprOrLiteral, literal } from './../Expr';
 import { castIfNeeded } from '../casting';
 import { FunctionSignature, FunctionDefn } from '../../operators/FunctionDefn';
-import { vec2, vec3, vec4 } from '../glIntrinsics';
 import { equalExpr } from '../comparators';
 
 let textureCoords: Expr = refLocal('vTextureCoord', DataType.VEC2);
@@ -98,6 +97,10 @@ export function transform(expr: Expr, out: Expr[]): void {
           const retVal = visit(result);
           textureCoords = saveTextureCoords;
 
+          if (retVal.type === DataType.OTHER) {
+            throw Error(`Type should have been decided by now: ${signalId}`);
+          }
+
           if (isSimpleExpr(retVal)) {
             signalList.push({ fragCoords, expr: retVal });
             return castIfNeeded(retVal, type);
@@ -162,6 +165,10 @@ export function transform(expr: Expr, out: Expr[]): void {
 
       case 'fork': {
         const value = visit(expr.value);
+        if (value.type === DataType.OTHER) {
+          throw Error(`Type should have been decided by now: ${expr.name}`);
+        }
+
         if (isSimpleExpr(value)) {
           return value;
         }
@@ -250,9 +257,9 @@ function canCast(expr: ExprOrLiteral, type: DataType): boolean {
 const DEFAULT_VALUE: { [key: number]: Expr } = {
   [DataType.INTEGER]: literal('0', DataType.INTEGER),
   [DataType.FLOAT]: literal('0.', DataType.FLOAT),
-  [DataType.VEC2]: vec2(0, 0),
-  [DataType.VEC3]: vec3(0, 0, 0),
-  [DataType.VEC4]: vec4(0, 0, 0, 0),
+  [DataType.VEC2]: literal('vec2(0., 0.)', DataType.VEC2),
+  [DataType.VEC3]: literal('vec3(0., 0., 0.)', DataType.VEC3),
+  [DataType.VEC4]: literal('vec4(0., 0., 0., 0.)', DataType.VEC4),
 };
 
 export function defaultValue(type: DataType) {

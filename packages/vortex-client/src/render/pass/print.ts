@@ -42,8 +42,6 @@ export function emit(out: PrintStream, chunk: OutputChunk) {
 
         // If the call only has one argument, and the argument will fit if broken,
         // then don't break, let the argument break instead.
-        console.log(flatten(args[0]));
-        console.log(chunkHeadLength(args[0]));
         if (args.length === 1 && out.canFit(chunkHeadLength(args[0]))) {
           emit(out, args[0]);
           out.append(')');

@@ -29,14 +29,6 @@ enum BlendOp {
   BURN = 23,
 }
 
-// export const blend = defineFn({
-//   name: 'blend',
-//   type: makeFunctionType({
-//     result: DataType.VEC4,
-//     args: [DataType.VEC4, DataType.VEC4, DataType.INTEGER, DataType.FLOAT, DataType.INTEGER],
-//   }),
-// });
-
 export const blend_screen = defineFn({
   name: 'blend_screen',
   type: makeFunctionType({
@@ -116,6 +108,7 @@ class Blend extends Operator {
         { name: 'Color Burn', value: BlendOp.BURN },
       ],
       default: 1,
+      pre: true,
     },
     {
       id: 'strength',
@@ -134,6 +127,7 @@ class Blend extends Operator {
         { name: 'On', value: 1 },
       ],
       default: 1,
+      pre: true,
     },
   ];
   public readonly description = `

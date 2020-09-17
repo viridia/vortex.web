@@ -11,6 +11,7 @@ import gradientColor from './gradient-color.glsl';
 import hexgrid from './hexgrid.glsl';
 import hsv from './hsv.glsl';
 import illuminate from './illuminate.glsl';
+import illuminate_pbr from './illuminate_pbr.glsl';
 import mask from './mask.glsl';
 import modulus from './modulus.glsl';
 import periodicNoise from './periodic-noise.glsl';
@@ -39,6 +40,7 @@ export const byName: { [name: string]: string } = {
   hexgrid,
   hsv,
   illuminate,
+  illuminate_pbr,
   mask,
   modulus,
   'periodic-noise': periodicNoise,

@@ -81,6 +81,11 @@ export abstract class Operator {
     return result;
   }
 
+  /** Flat list of all parameters that set uniforms. */
+  public get uniformParamList(): Parameter[] {
+    return this.paramList.filter(param => !param.pre);
+  }
+
   public uniformPrefix(nodeId: number) {
     const opName = this.id.slice(0, 1).toUpperCase() + this.id.slice(1);
     return `u${opName}${nodeId}`;

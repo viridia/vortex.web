@@ -223,7 +223,10 @@ export class Renderer {
     const paramValues = node.paramValues;
     const gl = this.gl;
     for (const param of params) {
-      const value = paramValues.has(param.id) ? paramValues.get(param.id) : param.default;
+      if (param.pre) {
+        continue;
+      }
+      const value = param.computed ? param.computed(node) : paramValues.get(param.id);
       const uniformName = node.operator.uniformName(node.id, param.id);
       switch (param.type) {
         case DataType.INTEGER:
@@ -237,6 +240,29 @@ export class Renderer {
             gl.getUniformLocation(program, uniformName),
             value !== undefined ? value : 0
           );
+          break;
+        case DataType.VEC2:
+          if (value !== undefined) {
+            gl.uniform2f(
+              gl.getUniformLocation(program, uniformName),
+              value[0],
+              value[1],
+            );
+          } else {
+            gl.uniform2f(gl.getUniformLocation(program, uniformName), 0, 0);
+          }
+          break;
+        case DataType.VEC3:
+          if (value !== undefined) {
+            gl.uniform3f(
+              gl.getUniformLocation(program, uniformName),
+              value[0],
+              value[1],
+              value[2],
+            );
+          } else {
+            gl.uniform3f(gl.getUniformLocation(program, uniformName), 0, 0, 0);
+          }
           break;
         case DataType.VEC4:
           if (value !== undefined) {

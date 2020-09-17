@@ -55,6 +55,7 @@ class Smooth extends Operator {
         { name: 'Smootherstep', value: 2 },
       ],
       default: 1,
+      pre: true,
     },
     {
       id: 'lower',

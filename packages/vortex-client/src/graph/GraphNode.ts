@@ -3,7 +3,7 @@ import { DataType, Operator, Parameter } from '../operators';
 import { Expr } from '../render/Expr';
 import { GLResources } from '../render/GLResources';
 import { InputTerminal } from './InputTerminal';
-import { ObservableMap, computed, observable, action } from 'mobx';
+import { ObservableMap, computed, observable, action, runInAction } from 'mobx';
 import { OutputTerminal } from './OutputTerminal';
 import { Renderer } from '../render/Renderer';
 import { ShaderAssembly } from '../render/ShaderAssembly';
@@ -47,6 +47,8 @@ export class GraphNode {
     public readonly id: number
   ) {
     this.operator = operator;
+
+    // Position input terminals.
     if (operator.inputs) {
       const spacing = Math.min(36, 120 / operator.inputs.length);
       let y = Math.floor((120 - operator.inputs.length * spacing) / 2);
@@ -55,6 +57,8 @@ export class GraphNode {
         y += spacing;
       });
     }
+
+    // Position output terminals.
     if (operator.outputs) {
       const spacing = Math.min(36, 120 / operator.outputs.length);
       let y = Math.floor((120 - operator.outputs.length * spacing) / 2);
@@ -63,6 +67,15 @@ export class GraphNode {
         y += spacing;
       });
     }
+
+    // Initialize all parameters to default values.
+    runInAction(() => {
+      this.operator.paramList.forEach(param => {
+        if (param.default !== undefined) {
+          this.paramValues.set(param.id, param.default);
+        }
+      });
+    })
 
     this.generator = new ShaderAssembly(this);
   }
@@ -274,7 +287,9 @@ export class GraphNode {
     })
     const declareUniforms = (params: Parameter[]): void => {
       params.forEach(param => {
-        if (param.type === DataType.GROUP) {
+        if (param.pre) {
+          return;
+        } else if (param.type === DataType.GROUP) {
           declareUniforms(param.children!);
         } else {
           const uniformName = this.operator.uniformName(this.id, param);

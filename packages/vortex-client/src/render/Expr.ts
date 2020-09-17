@@ -265,11 +265,20 @@ export type Expr =
 
 export type ExprOrLiteral = Expr | string | number;
 
-export function defineFn(callable: FunctionDefn): (...args: ExprOrLiteral[]) => CallExpr {
-  return (...args: ExprOrLiteral[]) => ({
-    kind: 'call',
-    args,
-    type: DataType.OTHER,
-    callable,
-  });
+export interface CallFactory {
+  (...args: ExprOrLiteral[]): CallExpr;
+  defn: FunctionDefn;
+}
+
+export function defineFn(defn: FunctionDefn): CallFactory {
+  function fn(...args: ExprOrLiteral[]): CallExpr {
+    return {
+      kind: 'call',
+      args,
+      type: DataType.OTHER,
+      callable: defn,
+    };
+  }
+  fn.defn = defn;
+  return fn;
 }

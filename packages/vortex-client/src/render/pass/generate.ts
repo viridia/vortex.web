@@ -49,16 +49,16 @@ export function generate(expr: Expr): OutputChunk {
       switch (dstType) {
         case DataType.FLOAT:
           if (srcType === DataType.VEC4) {
-            return fcall('dot', [generate(expr.value), 'vec4(0.3, 0.4, 0.3, 0.0)']);
+            return fcall('dot', [generate(expr.value), 'vec4(.3, .4, .3, 0.)']);
           } else if (srcType === DataType.VEC3) {
-            return fcall('dot', [generate(expr.value), 'vec3(0.3, 0.4, 0.3)']);
+            return fcall('dot', [generate(expr.value), 'vec3(.3, .4, .3)']);
           } else if (srcType === DataType.INTEGER) {
             return fcall('float', [generate(expr.value)]);
           }
           break;
         case DataType.VEC4:
           if (srcType === DataType.FLOAT) {
-            return fcall('vec4', [flat('vec3(1.0, 1.0, 1.0) * ', generate(expr.value)), '1.0']);
+            return fcall('vec4', [infix('*', 'vec3(1., 1., 1.)', generate(expr.value)), '1.']);
           }
           break;
         case DataType.VEC3:

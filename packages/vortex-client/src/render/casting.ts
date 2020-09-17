@@ -21,6 +21,8 @@ export function castIfNeeded(expr: ExprOrLiteral, type: DataType): Expr {
     }
   } else if (expr.type === type || glType(expr.type) === glType(type)) {
     return expr;
+  } else if (type === DataType.OTHER) {
+    throw Error(`Undetermined type: ${expr.kind}`);
   } else {
     return typeCast(expr, type);
   }
