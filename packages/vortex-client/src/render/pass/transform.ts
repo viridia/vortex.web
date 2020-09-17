@@ -183,6 +183,7 @@ export function transform(expr: Expr, out: Expr[]): void {
         const tmpVarRef = refLocal(tmpVarDef.name, value.type);
         tmpVarMap.set(expr.key, tmpVarRef);
         out.push(tmpVarDef);
+        tmpVarIndex += 1;
         return tmpVarRef;
       }
 

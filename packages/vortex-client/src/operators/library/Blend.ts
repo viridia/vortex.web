@@ -231,14 +231,6 @@ Blends two source images, similar to layer operations in GIMP or PhotoShop.
     }
 
     throw Error('Invalid blend operator: ' + op);
-
-    // return blend(
-    //   a,
-    //   b,
-    //   refUniform('op', DataType.INTEGER, node),
-    //   strength,
-    //   refUniform('norm', DataType.INTEGER, node)
-    // );
   }
 }
 
