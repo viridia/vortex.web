@@ -3,6 +3,7 @@ import blur from './blur.glsl';
 import bricks from './bricks.glsl';
 import cellular from './cellular.glsl';
 import cellularHex from './cellular_hex.glsl';
+import channel_mask from './channel_mask.glsl';
 import clamp_color from './clamp_color.glsl';
 import colorAdjust from './color-adjust.glsl';
 import crossfade from './crossfade.glsl';
@@ -32,6 +33,7 @@ export const byName: { [name: string]: string } = {
   bricks,
   cellular,
   cellular_hex: cellularHex,
+  channel_mask,
   clamp_color: clamp_color,
   'color-adjust': colorAdjust,
   crossfade,

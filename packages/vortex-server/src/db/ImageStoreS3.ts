@@ -45,30 +45,30 @@ export class ImageStoreS3 implements ImageStore {
   }
 
   // I don't think we need this - we can read the url directly.
-  public getImageUrl(imageId: string, res: express.Response): void {
-    return this.s3.getSignedUrl(
-      'getObject',
-      {
-        Bucket: process.env.STORAGE_BUCKET_IMAGES,
-        Key: imageId,
-      },
-      (err, data) => {
-        if (err) {
-          console.error(err);
-          if (err.name === 'NoSuchKey') {
-            res.status(404).json({ code: err.name, message: err.message });
-          } else if (err.name === 'AccessDenied') {
-            res.status(403).json({ code: err.name, message: err.message });
-          } else {
-            res.status(500).json({ code: err.name, message: err.message });
-          }
-        } else {
-          res.setHeader('content-type', 'text/plain');
-          res.send(data);
-        }
-      }
-    );
-  }
+  // public getImageUrl(imageId: string, res: express.Response): void {
+  //   return this.s3.getSignedUrl(
+  //     'getObject',
+  //     {
+  //       Bucket: process.env.STORAGE_BUCKET_IMAGES,
+  //       Key: imageId,
+  //     },
+  //     (err, data) => {
+  //       if (err) {
+  //         console.error(err);
+  //         if (err.name === 'NoSuchKey') {
+  //           res.status(404).json({ code: err.name, message: err.message });
+  //         } else if (err.name === 'AccessDenied') {
+  //           res.status(403).json({ code: err.name, message: err.message });
+  //         } else {
+  //           res.status(500).json({ code: err.name, message: err.message });
+  //         }
+  //       } else {
+  //         res.setHeader('content-type', 'text/plain');
+  //         res.send(data);
+  //       }
+  //     }
+  //   );
+  // }
 
   private newObjectId(bucket: string): Promise<string> {
     let attempts = 0;

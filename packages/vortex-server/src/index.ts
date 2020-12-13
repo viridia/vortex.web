@@ -4,11 +4,11 @@ import { addDocRoutes } from './routes/documents';
 import { addErrorRoutes } from './routes/errors';
 import { app } from './app';
 import { addImageRoutes } from './routes/images';
-import { ImageStoreS3 } from './db/ImageStoreS3';
+import { ImageStoreLocalFile } from './db/ImageStoreLocalFile';
 
 addAuthRoutes(app);
 addDocRoutes(app, new DocumentStoreSQLite());
-addImageRoutes(app, new ImageStoreS3());
+addImageRoutes(app, new ImageStoreLocalFile());
 addErrorRoutes(app);
 
 app.listen(process.env.PORT);

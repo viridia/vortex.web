@@ -6,9 +6,11 @@ import path from 'path';
 const UPLOADS_TMP_DIR = path.resolve(__dirname, '../..', process.env.UPLOADS_TMP_DIR);
 
 export function addImageRoutes(app: Express, imageStore: ImageStore) {
-  app.get('/api/images/:id', async (req, res) => {
-    imageStore.getImageUrl(req.params.id, res);
-  });
+  if (imageStore.getImage) {
+    app.get('/images/:id', async (req, res) => {
+      imageStore.getImage(req.params.id, res);
+    });
+  }
 
   const upload = multer({ dest: UPLOADS_TMP_DIR });
   app.post('/api/images', upload.single('attachment'), async (req, res) => {

@@ -47,6 +47,7 @@
       ]
     }
   },
+  "proxy": "http://localhost:9001",
   "browserslist": {
     "production": [
       ">0.2%",

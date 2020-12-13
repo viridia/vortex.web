@@ -59,10 +59,15 @@ the latter (and S3) you'll need an AWS developer account.
 
 One you have a .env file, you can run:
 
+    cd packages/vortex-server
     npm install
-    npm run server
+    npm start
 
-Then navigate to http://localhost:9001
+    cd packages/vortex-client
+    npm install
+    npm run start-local
+
+Then navigate to http://localhost:3010
 
 ### Vortex 2.0
 

@@ -417,6 +417,7 @@ export class Renderer {
 
     const image = new Image();
     image.onload = function () {
+      // console.log('onLoad', texture, image.width, image.height);
       gl.bindTexture(gl.TEXTURE_2D, texture);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
 
@@ -429,7 +430,11 @@ export class Renderer {
       }
       callback(texture);
     };
+    image.onerror = function (err) {
+      console.log(err);
+    }
 
+    console.log('setting url', url);
     image.crossOrigin = '';
     image.src = url;
   }

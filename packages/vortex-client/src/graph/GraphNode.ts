@@ -208,10 +208,11 @@ export class GraphNode {
 
   public loadTextures(renderer: Renderer) {
     for (const param of this.operator.paramList) {
+      // console.log('param', param, this.paramValues.size);
       if (param.type === DataType.IMAGE && this.paramValues.has(param.id)) {
-        const imageUrl = this.paramValues.get(param.id);
-        if (imageUrl) {
-          renderer.loadTexture(imageUrl, texture => {
+        const imageData = this.paramValues.get(param.id);
+        if (imageData?.url) {
+          renderer.loadTexture(imageData.url, texture => {
             this.ensureGLResources().textures.set(param.id, texture);
             // TODO: We need to make this an observable.
             // this.notifyChange(ChangeType.PARAM_VALUE_CHANGED);

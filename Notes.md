@@ -1,13 +1,11 @@
 # TODO:
 
-* PBR shader
-* Emboss filter
-* Bug in blend - need a 'getParamValue' with defaults.
 * Drag multiple selection.
 * Make type conversion less agressive
   * Get rid of 'typecast' node type.
 * Allow infix operators to accept number literals.
 * Top-level package and build scripts
+* Graph Descriptions / Markdown
 * Cloud storage:
   * More robust about accidental overwrites.
   * List recent documents
@@ -21,12 +19,11 @@
   * See if we can remove some of the type params that are passed in
 * Limit operator dragging to document size
 * Make brick edges smoother - gamma correction?
-* Cached signals not working.
 * Upload JSON files
 * Undo / Redo
 * Log scale controls - shininess is a good example
-* Graph Descriptions / Markdown
-* Output type conversion - clean up and make consistent.
+* Perhaps allow different variations based on output type...so we don't constantly convert
+  when not needed?
 
 * https://github.com/Jam3/glsl-fast-gaussian-blur
 
@@ -44,6 +41,7 @@
     * Checker
     * Function
     * Tartan
+    * Turbulence
 
   * SVG filter types:
     * feColorMatrix
@@ -59,11 +57,10 @@
 # Vortex V2 - more efficient shader code generation.
 
 * Local image uploading
-* Optimize blend
 * Need a better method for writing shader expressions than manual Expression trees.
   * GLSL parser?
 * Show terminal data types
-* Show connection data types (float, vec2, vec3, buffered)
+* Show connection data types (float, vec2, vec3, buffered) (Partly done)
 * Patterns:
   * Constant Float operator
     * Probably shouldn't have a preview window.
@@ -77,7 +74,7 @@
   * Custom shader editor!!
     * We'll need an expansion button for side panel to make it wider.
 
-* Function Curve
+* Function Curve Editor
   * Curve type
     * Constant
     * Linear

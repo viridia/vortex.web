@@ -44,6 +44,26 @@
                 { "type": "number" },
                 { "type": "boolean" },
                 {
+                  "type": "object",
+                  "title": "Image",
+                  "description": "Image metadata",
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "description": "Image name",
+                      "type": "string"
+                    },
+                    "contentType": {
+                      "description": "Image MIME type",
+                      "type": "string"
+                    },
+                    "url": {
+                      "description": "URL to download image data",
+                      "type": "string"
+                    }
+                  }
+                },
+                {
                   "type": "array",
                   "description": "Coords: UV, RGB, XYZ, RGBA or XYZW",
                   "minItems": 2,

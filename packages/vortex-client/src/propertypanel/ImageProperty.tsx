@@ -45,18 +45,24 @@ export const ImageProperty: FC<Props> = ({ parameter, node, graph }) => {
   useEffect(() => {
     return reaction(
       () => node.paramValues.get(parameter.id),
-      url => {
-        if (url) {
-          Axios.head(url).then(resp => {
-            const name = resp.headers['x-amz-meta-name'];
-            if (name) {
-              setImageName(name);
-            } else if (name) {
-              setImageName(null);
-            }
-          });
+      data => {
+        if (typeof data === 'string') {
+          const url = data;
+          if (url) {
+            Axios.head(url).then(resp => {
+              const name = resp.headers['x-amz-meta-name'];
+              if (name) {
+                setImageName(name);
+              } else if (name) {
+                setImageName(null);
+              }
+            });
+          }
+        } else if (typeof data?.name === 'string') {
+          setImageName(data.name);
         }
-      }
+      },
+      { fireImmediately: true }
     );
   }, [node, parameter]);
 
@@ -65,15 +71,20 @@ export const ImageProperty: FC<Props> = ({ parameter, node, graph }) => {
       const file = fileEl.current.files[0];
       const formData = new FormData();
       formData.append('attachment', file);
-      axiosInstance.post('/api/images', formData).then(resp => {
-        renderer.loadTexture(resp.data.url, texture => {
-          runInAction(() => {
-            node.glResources?.textures.set(parameter.id, texture);
-            node.paramValues.set(parameter.id, resp.data.url);
-            graph.modified = true;
+      axiosInstance.post('/api/images', formData).then(
+        resp => {
+          renderer.loadTexture(resp.data.url, texture => {
+            runInAction(() => {
+              node.glResources?.textures.set(parameter.id, texture);
+              node.paramValues.set(parameter.id, resp.data);
+              graph.modified = true;
+            });
           });
-        });
-      });
+        },
+        error => {
+          console.error(error);
+        }
+      );
     } else {
       runInAction(() => {
         node.paramValues.set(parameter.id, null);
